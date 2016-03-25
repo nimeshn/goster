@@ -13,16 +13,21 @@ func rootHandler(rw http.ResponseWriter, req *http.Request) {
 
 func main() {
 
-	model := Model{Name: "Hi", DisplayName: "Name"}
+	model := Model{
+		Name:        "Hi",
+		DisplayName: "Name",
+		Fields:      []*Field{&Field{Validator: &FieldValidation{}}}}
 	vals, _ := json.Marshal(model)
-
-	str := `{"Name": "Hi2", "DisplayName": "Name2"}`
-	jsonModel := Model{}
-	fmt.Println(jsonModel)
-	json.Unmarshal([]byte(str), &jsonModel)
-
 	fmt.Println(string(vals))
-	fmt.Println(jsonModel)
+	/*
+
+		str := `{"Name": "Hi2", "DisplayName": "Name2"}`
+		jsonModel := Model{}
+		fmt.Println(jsonModel)
+		json.Unmarshal([]byte(str), &jsonModel)
+
+		fmt.Println(jsonModel)
+	*/
 
 	fmt.Println("Goster is running on http://127.0.0.1:8000")
 	//
