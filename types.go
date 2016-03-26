@@ -4,7 +4,7 @@ package main
 type Types int
 
 const (
-	String Types = iota + 1
+	String Types = iota
 	Integer
 	Float
 	Date
@@ -20,12 +20,12 @@ var typesDef = [...]string{
 }
 
 // String returns the desc of the Type
-func (t Types) String() string { return typesDef[t-1] }
+func (t Types) String() string { return typesDef[t] }
 
 type IndexView int
 
 const (
-	List IndexView = iota + 1
+	List IndexView = iota
 	Table
 )
 
@@ -35,4 +35,4 @@ var indexViewDef = [...]string{
 }
 
 // String returns the desc of the Type
-func (i IndexView) String() string { return indexViewDef[i-1] }
+func (i IndexView) String() string { return indexViewDef[i] }

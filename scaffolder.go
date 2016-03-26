@@ -51,6 +51,7 @@ type App struct {
 	Name        string
 	DisplayName string
 	CompanyName string
+	VersionNo   string
 	Models      []*Model
 }
 
@@ -59,6 +60,7 @@ var (
 		Name:        "SampleApp",
 		DisplayName: "SampleApp",
 		CompanyName: "Sample Company",
+		VersionNo:   "V1.0",
 		Models:      []*Model{},
 	}
 )

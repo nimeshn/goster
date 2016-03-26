@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 	"strings"
 )
 
@@ -12,9 +13,12 @@ type ModelTokens struct {
 	modelIndexData          string
 	modelIndexFunc          string
 	modelIsNewFunc          string
+	modelNewFunc            string
 	modelLoadFunc           string
 	modelSaveFunc           string
 	modelDeleteFunc         string
+	controllerName          string
+	indexControllerName     string
 	indexViewFileName       string
 	editViewFileName        string
 	showViewFileName        string
@@ -27,6 +31,26 @@ type ModelTokens struct {
 	deleteRoute             string
 }
 
+type AppTokens struct {
+	helperFileName     string
+	moduleFileName     string
+	varsRoutesFileName string
+	templatePath       string
+	appClientPath      string
+	appServerPath      string
+}
+
+func (a *App) GetTokens() *AppTokens {
+	return &AppTokens{
+		helperFileName:     "app.helper.js",
+		moduleFileName:     "app.module.js",
+		varsRoutesFileName: "app.vars.routes.js",
+		templatePath:       "appTemplate",
+		appClientPath:      path.Join(a.FolderPath, "client"),
+		appServerPath:      path.Join(a.FolderPath, "server"),
+	}
+}
+
 func (m *Model) GetTokens() *ModelTokens {
 	return &ModelTokens{
 		idCol:                   fmt.Sprintf("%sId", m.Name),
@@ -35,12 +59,15 @@ func (m *Model) GetTokens() *ModelTokens {
 		modelIndexData:          fmt.Sprintf("%sList", m.Name),
 		modelIndexFunc:          fmt.Sprintf("Get%sList", strings.Title(m.Name)),
 		modelIsNewFunc:          fmt.Sprintf("IsNew%s", strings.Title(m.Name)),
+		modelNewFunc:            fmt.Sprintf("New%s", strings.Title(m.Name)),
 		modelLoadFunc:           fmt.Sprintf("Load%s", strings.Title(m.Name)),
 		modelSaveFunc:           fmt.Sprintf("Save%s", strings.Title(m.Name)),
 		modelDeleteFunc:         fmt.Sprintf("Delete%s", strings.Title(m.Name)),
-		indexViewFileName:       fmt.Sprintf("%sIndex.view.htm", m.Name),
-		editViewFileName:        fmt.Sprintf("%sEdit.view.htm", m.Name),
-		showViewFileName:        fmt.Sprintf("%sShow.view.htm", m.Name),
+		controllerName:          fmt.Sprintf("%sController", m.Name),
+		indexControllerName:     fmt.Sprintf("%sIndexController", m.Name),
+		indexViewFileName:       fmt.Sprintf("%s.index.view.htm", m.Name),
+		editViewFileName:        fmt.Sprintf("%s.edit.view.htm", m.Name),
+		showViewFileName:        fmt.Sprintf("%s.show.view.htm", m.Name),
 		controllerFileName:      fmt.Sprintf("%s.controller.js", m.Name),
 		indexControllerFileName: fmt.Sprintf("%s.index.controller.js", m.Name),
 		indexRoute:              fmt.Sprintf("/%s/list", m.Name),
@@ -179,30 +206,17 @@ func (m *Model) GetClientIndexView(a *ModelTokens) (fileName, htmlCode string) {
 func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
 	fileName = a.controllerFileName
 
-	//modelIndexFunc
-	listFunc := fmt.Sprintf(
-		`$scope.%s = function(){
-			$http.get(apiPath + "%s")
-				.then(function(response) {
-					if (response.status == 200){
-						$scope.%s = response.data;
-						clearAPIError($scope);
-					}
-				},
-				function(response) {
-					handleAPIError($scope, response);
-				}
-			);
-		};`, a.modelIndexFunc, a.indexRoute, a.modelIndexData)
-
 	//modelIsNewFunc
 	isNewFunc := fmt.Sprintf(
-		`$scope.%s = function(){
-		return (!$scope.%s || $scope.%s == "" || $scope.%s == null);
-	}`, a.modelIsNewFunc, a.idCol)
+		`//function to check if the view is for new model entity
+		$scope.%s = function(){
+			return (!$scope.%s || $scope.%s == "" || $scope.%s == null);
+		}`, a.modelIsNewFunc, a.idCol)
 
 	//modelLoadFunc
-	loadFunc := fmt.Sprintf(`$scope.%s =function(){
+	loadFunc := fmt.Sprintf(
+		`//function to load model entity
+		$scope.%s =function(){
 		$http.get(apiPath + "/%s/" + $scope.%s)
 			.then(function(response) {
 				if (response.status == 200){
@@ -218,7 +232,8 @@ func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
 
 	//modelSaveFunc
 	saveFunc := fmt.Sprintf(
-		`$scope.%s =function(){
+		`//function to save model entity
+		$scope.%s =function(){
 			$http({
 					method: %s()?'POST:'PUT'',
 					url: apiPath + "/%s",
@@ -238,6 +253,44 @@ func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
 			  });
 		};`, a.modelSaveFunc, a.modelIsNewFunc, m.Name, a.modelFormData, a.indexRoute)
 
+	JSCode = isNewFunc + loadFunc + saveFunc
+
+	JSCode = fmt.Sprintf(`app.controller('%s', 
+		['$scope', '$http', '$location', '$routeParams', 'apiPath', 'appVars',
+			function($scope, $http, $location, $routeParams, apiPath, appVars) {
+		//check if the user has access to this page	
+		checkPageAccess($location, appVars.user);	
+		$scope.%s = $routeParams.%s;
+		if $scope.%s(){//New 
+			$scope.%s();
+		}else{
+			$scope.%s();
+		}
+		%s
+	}]);`, a.controllerName, a.idCol, a.idCol, a.modelIsNewFunc, a.modelNewFunc, a.modelLoadFunc, JSCode)
+
+	return
+}
+
+func (m *Model) GetClientIndexController(a *ModelTokens) (fileName, JSCode string) {
+	fileName = a.indexControllerFileName
+
+	//modelIndexFunc
+	listFunc := fmt.Sprintf(
+		`$scope.%s = function(){
+			$http.get(apiPath + "%s")
+				.then(function(response) {
+					if (response.status == 200){
+						$scope.%s = response.data;
+						clearAPIError($scope);
+					}
+				},
+				function(response) {
+					handleAPIError($scope, response);
+				}
+			);
+		};`, a.modelIndexFunc, a.indexRoute, a.modelIndexData)
+
 	//modelDeleteFunc
 	deleteFunc := fmt.Sprintf(`$scope.%s = function(%s){
 			$http.put(apiPath + "%s", {id: %s})
@@ -253,11 +306,92 @@ func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
 				);
 		};`, a.modelDeleteFunc, a.idCol, a.deleteRoute, a.idCol, a.modelIndexData, a.idCol)
 
-	JSCode = listFunc + isNewFunc + loadFunc + saveFunc + deleteFunc
+	JSCode = listFunc + deleteFunc
+
+	JSCode = fmt.Sprintf(`app.controller('%s', 
+		['$scope', '$http', '$location', 'apiPath', 'appVars',
+			function($scope, $http, $location, apiPath, appVars) {
+		//check if the user has access to this page	
+		checkPageAccess($location, appVars.user);	
+
+		$scope.%s();
+		%s
+	}]);`, a.indexControllerName, a.modelIndexFunc, JSCode)
+
 	return
 }
 
-func (m *Model) GetClientIndexController(a *ModelTokens) (fileName, JSCode string) {
-	fileName = a.indexControllerFileName
+func (m *Model) GetRoutes(a *ModelTokens) (routes string) {
+	indexRoute := fmt.Sprintf(
+		`.when('%s', {
+			templateUrl: 'app/%s/%s',
+			controller: '%s',
+			title : '%s List'
+		})`, a.indexRoute, m.Name, a.indexViewFileName, a.indexControllerName, strings.Title(m.DisplayName))
+
+	newRoute := fmt.Sprintf(
+		`.when('%s', {
+			templateUrl: 'app/%s/%s',
+			controller: '%s',
+			title : 'New %s'
+		})`, a.newRoute, m.Name, a.editViewFileName, a.controllerName, strings.Title(m.DisplayName))
+
+	editRoute := fmt.Sprintf(
+		`.when('%s:%s', {
+			templateUrl: 'app/%s/%s',
+			controller: '%s',
+			title : 'Edit %s'
+		})`, a.editRoute, a.idCol, m.Name, a.editViewFileName, a.controllerName, strings.Title(m.DisplayName))
+
+	showRoute := fmt.Sprintf(
+		`.when('%s:%s', {
+			templateUrl: 'app/%s/%s',
+			controller: '%s',
+			title : '%s Details'
+		})`, a.showRoute, a.idCol, m.Name, a.showViewFileName, a.controllerName, strings.Title(m.DisplayName))
+
+	routes = indexRoute + newRoute + editRoute + showRoute
+	return
+}
+
+func (a *App) MakeVarsRoutes(t *AppTokens) (fileName, JSCode string) {
+	fileName = t.varsRoutesFileName
+
+	routing := ""
+	for _, val := range a.Models {
+		routing += val.GetRoutes(val.GetTokens())
+	}
+
+	JSCode = fmt.Sprintf(
+		`app.constant('appName','%s');
+		app.constant('appVersion','%s');
+		app.constant('compName','%s');
+		app.constant('apiPath','../server');
+		app.value('appVars', {
+			user : {
+					sessionId:'',
+					memberId:'',
+					userName:'',
+					fbToken:'',
+					gpToken:'',
+					address:'',
+					isNewSignUp : false
+				},
+			fbAppId : _fbAppId,
+			gpClientId : _gpClientId,
+			fbSDKLoaded: false,
+			gpSDKLoaded: false,
+			fbSDKLoadedHndlr: null,
+			gpSDKLoadedHndlr: null
+		});
+
+		//Routes for Application
+		app.config(['$routeProvider', function($routeProvider) {	
+			$routeProvider
+			%s
+			.otherwise({
+			   redirectTo: '/home'
+			});
+		}]);`, a.Name, a.VersionNo, a.CompanyName, routing)
 	return
 }
