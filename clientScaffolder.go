@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path"
 	"strings"
 )
 
@@ -29,26 +28,6 @@ type ModelTokens struct {
 	editRoute               string
 	showRoute               string
 	deleteRoute             string
-}
-
-type AppTokens struct {
-	helperFileName     string
-	moduleFileName     string
-	varsRoutesFileName string
-	templatePath       string
-	appClientPath      string
-	appServerPath      string
-}
-
-func (a *App) GetTokens() *AppTokens {
-	return &AppTokens{
-		helperFileName:     "app.helper.js",
-		moduleFileName:     "app.module.js",
-		varsRoutesFileName: "app.vars.routes.js",
-		templatePath:       "appTemplate",
-		appClientPath:      path.Join(a.FolderPath, "client"),
-		appServerPath:      path.Join(a.FolderPath, "server"),
-	}
 }
 
 func (m *Model) GetTokens() *ModelTokens {
@@ -354,7 +333,7 @@ func (m *Model) GetRoutes(a *ModelTokens) (routes string) {
 	return
 }
 
-func (a *App) MakeVarsRoutes(t *AppTokens) (fileName, JSCode string) {
+func (a *App) GetVarsRoutes(t *AppToken) (fileName, JSCode string) {
 	fileName = t.varsRoutesFileName
 
 	routing := ""
@@ -393,5 +372,15 @@ func (a *App) MakeVarsRoutes(t *AppTokens) (fileName, JSCode string) {
 			   redirectTo: '/home'
 			});
 		}]);`, a.Name, a.VersionNo, a.CompanyName, routing)
+	return
+}
+
+func (a *App) GetNavScriptLinks(t *AppToken) (navLinks, scriptLinks string) {
+	for _, mod := range a.Models {
+		mt := mod.GetTokens()
+		navLinks += fmt.Sprintf(`<li><a href="%s">%s</a></li>`, mt.indexRoute, mod.DisplayName)
+		scriptLinks += fmt.Sprintf(`<script src = "app/%s/%s"></script>`, mod.Name, mt.indexControllerFileName)
+		scriptLinks += fmt.Sprintf(`<script src = "app/%s/%s"></script>`, mod.Name, mt.controllerFileName)
+	}
 	return
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"path"
 )
 
 type ViewOptions struct {
@@ -55,8 +56,17 @@ type App struct {
 	Models      []*Model
 }
 
+type AppToken struct {
+	helperFileName     string
+	moduleFileName     string
+	varsRoutesFileName string
+	appTemplatePath    string
+	appClientPath      string
+	appServerPath      string
+}
+
 var (
-	app App = App{
+	app *App = &App{
 		Name:        "SampleApp",
 		DisplayName: "SampleApp",
 		CompanyName: "Sample Company",
@@ -64,6 +74,17 @@ var (
 		Models:      []*Model{},
 	}
 )
+
+func GetAppToken(appDir string) *AppToken {
+	return &AppToken{
+		helperFileName:     "app.helper.js",
+		moduleFileName:     "app.module.js",
+		varsRoutesFileName: "app.vars.routes.js",
+		appTemplatePath:    "appTemplate",
+		appClientPath:      path.Join(appDir, "client"),
+		appServerPath:      path.Join(appDir, "server"),
+	}
+}
 
 func (a *App) AddModel(model *Model) {
 	mod := a.GetModel(model.Name)
