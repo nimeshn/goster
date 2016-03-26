@@ -19,15 +19,12 @@ func main() {
 		Fields:      []*Field{&Field{Validator: &FieldValidation{}}}}
 	vals, _ := json.Marshal(model)
 	fmt.Println(string(vals))
-	/*
 
-		str := `{"Name": "Hi2", "DisplayName": "Name2"}`
-		jsonModel := Model{}
-		fmt.Println(jsonModel)
-		json.Unmarshal([]byte(str), &jsonModel)
-
-		fmt.Println(jsonModel)
-	*/
+	fmt.Println("Unmarshalling now")
+	str := `{"name": "Hi2", "DisplayName": "Name2"}`
+	jsonModel := Model{}
+	json.Unmarshal([]byte(str), &jsonModel)
+	fmt.Println(jsonModel)
 
 	fmt.Println("Goster is running on http://127.0.0.1:8000")
 	//

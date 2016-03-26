@@ -36,7 +36,7 @@ type Field struct {
 }
 
 type Model struct {
-	Name             string
+	Name             string `json:"name"`
 	DisplayName      string
 	Fields           []*Field
 	Options          ViewOptions
