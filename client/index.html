@@ -1,3 +1,4 @@
+{{define "layout"}}
 <!DOCTYPE html>
 <html lang="en" ng-app="app" ng-controller="appController" itemscope itemtype="http://schema.org/Other">
 	<head>
@@ -23,6 +24,7 @@
 			</div>
 			<div class="collapse navbar-collapse" id="myNavbar">
 			  <ul class="nav navbar-nav" ng-show="IsLoggedIn()">
+				{{template "content"}}
 				<li><a href="#feed">My Feed</a></li>
 				<li><a href="#postlist">My Posts</a></li>
 				<li><a href="#profile">Profile</a></li>
@@ -54,3 +56,4 @@
 		<script src = "app/home/home.controller.js"></script>
 	</body>
 </html>
+{{end}}

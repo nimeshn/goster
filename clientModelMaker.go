@@ -2,20 +2,21 @@ package main
 
 import (
 	"fmt"
+	"path"
 	"strings"
 )
 
-type ModelTokens struct {
+type ClientModelSettings struct {
 	idCol                   string
-	modelForm               string
-	modelFormData           string
-	modelIndexData          string
-	modelIndexFunc          string
-	modelIsNewFunc          string
-	modelNewFunc            string
-	modelLoadFunc           string
-	modelSaveFunc           string
-	modelDeleteFunc         string
+	formName                string
+	formData                string
+	indexData               string
+	indexFunc               string
+	isNewFunc               string
+	newFunc                 string
+	loadFunc                string
+	saveFunc                string
+	deleteFunc              string
 	controllerName          string
 	indexControllerName     string
 	indexViewFileName       string
@@ -30,18 +31,18 @@ type ModelTokens struct {
 	deleteRoute             string
 }
 
-func (m *Model) GetTokens() *ModelTokens {
-	return &ModelTokens{
+func (m *Model) GetClientSettings() *ClientModelSettings {
+	return &ClientModelSettings{
 		idCol:                   fmt.Sprintf("%sId", m.Name),
-		modelForm:               fmt.Sprintf("%sForm", m.Name),
-		modelFormData:           fmt.Sprintf("%sData", m.Name),
-		modelIndexData:          fmt.Sprintf("%sList", m.Name),
-		modelIndexFunc:          fmt.Sprintf("Get%sList", strings.Title(m.Name)),
-		modelIsNewFunc:          fmt.Sprintf("IsNew%s", strings.Title(m.Name)),
-		modelNewFunc:            fmt.Sprintf("New%s", strings.Title(m.Name)),
-		modelLoadFunc:           fmt.Sprintf("Load%s", strings.Title(m.Name)),
-		modelSaveFunc:           fmt.Sprintf("Save%s", strings.Title(m.Name)),
-		modelDeleteFunc:         fmt.Sprintf("Delete%s", strings.Title(m.Name)),
+		formName:                fmt.Sprintf("%sForm", m.Name),
+		formData:                fmt.Sprintf("%sData", m.Name),
+		indexData:               fmt.Sprintf("%sList", m.Name),
+		indexFunc:               fmt.Sprintf("Get%sList", strings.Title(m.Name)),
+		isNewFunc:               fmt.Sprintf("IsNew%s", strings.Title(m.Name)),
+		newFunc:                 fmt.Sprintf("New%s", strings.Title(m.Name)),
+		loadFunc:                fmt.Sprintf("Load%s", strings.Title(m.Name)),
+		saveFunc:                fmt.Sprintf("Save%s", strings.Title(m.Name)),
+		deleteFunc:              fmt.Sprintf("Delete%s", strings.Title(m.Name)),
 		controllerName:          fmt.Sprintf("%sController", m.Name),
 		indexControllerName:     fmt.Sprintf("%sIndexController", m.Name),
 		indexViewFileName:       fmt.Sprintf("%s.index.view.htm", m.Name),
@@ -57,20 +58,20 @@ func (m *Model) GetTokens() *ModelTokens {
 	}
 }
 
-func (m *Model) GetClientEditView(a *ModelTokens) (fileName, htmlCode string) {
-	fileName = a.editViewFileName
+func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode string) {
+	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.editViewFileName)
 
 	htmlCode = `<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div><div class="row text-center">`
-	htmlCode += fmt.Sprintf(`<h3 ng-bind="(%s()?'New':'Edit') + ' %s'"></h3>`, a.modelIsNewFunc, m.DisplayName)
+	htmlCode += fmt.Sprintf(`<h3 ng-bind="(%s()?'New':'Edit') + ' %s'"></h3>`, a.isNewFunc, m.DisplayName)
 	htmlCode += `<hr/></div>`
 
-	htmlCode += fmt.Sprintf(`<form class="form-horizontal" role="form" name="%s" ng-submit="%s()"><div class="row">`, a.modelForm, a.modelSaveFunc)
+	htmlCode += fmt.Sprintf(`<form class="form-horizontal" role="form" name="%s" ng-submit="%s()"><div class="row">`, a.formName, a.saveFunc)
 	for _, fld := range m.Fields {
 		htmlCode += `<div class="form-group">`
 		htmlCode += fmt.Sprintf(`<label class="control-label col-sm-4" for="%s">%s:</label>`, fld.Name, fld.DisplayName)
 		htmlCode += `<div class="col-sm-8">`
 		htmlCode += fmt.Sprintf(`<input type="text" class="form-control" id="%s" placeholder="Enter %s" ng-model="%s.%s" title="%s" `,
-			fld.Name, fld.DisplayName, a.modelFormData, fld.Name, fld.DisplayName)
+			fld.Name, fld.DisplayName, a.formData, fld.Name, fld.DisplayName)
 
 		if fld.Type == Boolean {
 			htmlCode += `type="checkbox" `
@@ -126,8 +127,8 @@ func (m *Model) GetClientEditView(a *ModelTokens) (fileName, htmlCode string) {
 	return
 }
 
-func (m *Model) GetClientShowView(a *ModelTokens) (fileName, htmlCode string) {
-	fileName = a.showViewFileName
+func (m *Model) GetClientShowView(a *ClientModelSettings) (fileName, htmlCode string) {
+	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.showViewFileName)
 
 	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div>`+
 		`<div class="row text-center"><h3>%s Details</h3><hr></div>`, m.DisplayName)
@@ -135,29 +136,29 @@ func (m *Model) GetClientShowView(a *ModelTokens) (fileName, htmlCode string) {
 	htmlCode += `<div class="row"><div class="col-sm-12">`
 	for _, fld := range m.Fields {
 		htmlCode += fmt.Sprintf(`<div class="row"><div class="col-sm-12"><h3 ng-bind="%s"></h3><p ng-bind="%s.%s"></p></div></div>`,
-			fld.DisplayName, a.modelFormData, fld.Name)
+			fld.DisplayName, a.formData, fld.Name)
 	}
 	htmlCode += `</div></div>`
 	htmlCode += `<div class="row"><hr></div>`
 	return
 }
 
-func (m *Model) GetClientIndexView(a *ModelTokens) (fileName, htmlCode string) {
-	fileName = a.indexViewFileName
+func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode string) {
+	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.indexViewFileName)
 
 	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div>`+
 		`<div class="row text-center"><h3>%s List</h3><hr></div>`, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div class="row text-center"><a href="" ng-click="%s()"><span class="glyphicon glyphicon-refresh"/> Refresh</a>`+
 		`<a href="%s" class="col-sm-offset-1"><span class="glyphicon glyphicon-plus"/> New %s</a></div><br/>`,
-		a.modelLoadFunc, a.newRoute, m.DisplayName)
+		a.loadFunc, a.newRoute, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div ng-if="%s.length==0" class="row"><div class="col-sm-12 text-center"><h3>0 Records Found.</h3></div></div>`,
-		a.modelFormData)
+		a.formData)
 
-	htmlCode += fmt.Sprintf(`<div ng-if="%s.length>0" class="row"><div class="col-sm-12">`, a.modelFormData)
+	htmlCode += fmt.Sprintf(`<div ng-if="%s.length>0" class="row"><div class="col-sm-12">`, a.formData)
 	if m.ViewType == List {
-		htmlCode += fmt.Sprintf(`<div class="row" ng-repeat="x in %s | orderBy:createdOn:reverse">`, a.modelFormData)
+		htmlCode += fmt.Sprintf(`<div class="row" ng-repeat="x in %s | orderBy:createdOn:reverse">`, a.formData)
 		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="%s{{x.id}}" alt="View %s" title="View %s">`+
 			`<span class="glyphicon glyphicon-folder-open"></span></a></div>`,
 			a.showRoute, m.DisplayName, m.DisplayName)
@@ -166,11 +167,11 @@ func (m *Model) GetClientIndexView(a *ModelTokens) (fileName, htmlCode string) {
 			a.editRoute, m.DisplayName, m.DisplayName)
 		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="" alt="Delete %s" title="Delete %s"><span class="glyphicon glyphicon-remove" `+
 			`ng-click="%s(x.id);"></span></a></div>`,
-			m.DisplayName, m.DisplayName, a.modelDeleteFunc)
+			m.DisplayName, m.DisplayName, a.deleteFunc)
 		for _, fld := range m.Fields {
 			if fld.ShowInIndex {
 				htmlCode += fmt.Sprintf(`<div class="col-sm-1"><span ng-bind="%s.%s"></span></div>`,
-					a.modelFormData, fld.Name)
+					a.formData, fld.Name)
 			}
 		}
 		htmlCode += `</div>`
@@ -182,15 +183,15 @@ func (m *Model) GetClientIndexView(a *ModelTokens) (fileName, htmlCode string) {
 	return
 }
 
-func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
-	fileName = a.controllerFileName
+func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode string) {
+	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.controllerFileName)
 
 	//modelIsNewFunc
 	isNewFunc := fmt.Sprintf(
 		`//function to check if the view is for new model entity
 		$scope.%s = function(){
 			return (!$scope.%s || $scope.%s == "" || $scope.%s == null);
-		}`, a.modelIsNewFunc, a.idCol)
+		}`, a.isNewFunc, a.idCol)
 
 	//modelLoadFunc
 	loadFunc := fmt.Sprintf(
@@ -207,7 +208,7 @@ func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
 				handleAPIError($scope, response);
 			}
 		);
-	}`, a.modelLoadFunc, m.Name, a.idCol, a.modelFormData, m.Name)
+	}`, a.loadFunc, m.Name, a.idCol, a.formData, m.Name)
 
 	//modelSaveFunc
 	saveFunc := fmt.Sprintf(
@@ -230,7 +231,7 @@ func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
 				function(response){
 					handleAPIError($scope, response);
 			  });
-		};`, a.modelSaveFunc, a.modelIsNewFunc, m.Name, a.modelFormData, a.indexRoute)
+		};`, a.saveFunc, a.isNewFunc, m.Name, a.formData, a.indexRoute)
 
 	JSCode = isNewFunc + loadFunc + saveFunc
 
@@ -246,13 +247,13 @@ func (m *Model) GetClientController(a *ModelTokens) (fileName, JSCode string) {
 			$scope.%s();
 		}
 		%s
-	}]);`, a.controllerName, a.idCol, a.idCol, a.modelIsNewFunc, a.modelNewFunc, a.modelLoadFunc, JSCode)
+	}]);`, a.controllerName, a.idCol, a.idCol, a.isNewFunc, a.newFunc, a.loadFunc, JSCode)
 
 	return
 }
 
-func (m *Model) GetClientIndexController(a *ModelTokens) (fileName, JSCode string) {
-	fileName = a.indexControllerFileName
+func (m *Model) GetClientIndexController(a *ClientModelSettings) (fileName, JSCode string) {
+	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.indexControllerFileName)
 
 	//modelIndexFunc
 	listFunc := fmt.Sprintf(
@@ -268,7 +269,7 @@ func (m *Model) GetClientIndexController(a *ModelTokens) (fileName, JSCode strin
 					handleAPIError($scope, response);
 				}
 			);
-		};`, a.modelIndexFunc, a.indexRoute, a.modelIndexData)
+		};`, a.indexFunc, a.indexRoute, a.indexData)
 
 	//modelDeleteFunc
 	deleteFunc := fmt.Sprintf(`$scope.%s = function(%s){
@@ -283,7 +284,7 @@ func (m *Model) GetClientIndexController(a *ModelTokens) (fileName, JSCode strin
 						handleAPIError($scope, response);
 					}
 				);
-		};`, a.modelDeleteFunc, a.idCol, a.deleteRoute, a.idCol, a.modelIndexData, a.idCol)
+		};`, a.deleteFunc, a.idCol, a.deleteRoute, a.idCol, a.indexData, a.idCol)
 
 	JSCode = listFunc + deleteFunc
 
@@ -295,12 +296,12 @@ func (m *Model) GetClientIndexController(a *ModelTokens) (fileName, JSCode strin
 
 		$scope.%s();
 		%s
-	}]);`, a.indexControllerName, a.modelIndexFunc, JSCode)
+	}]);`, a.indexControllerName, a.indexFunc, JSCode)
 
 	return
 }
 
-func (m *Model) GetRoutes(a *ModelTokens) (routes string) {
+func (m *Model) GetRoutes(a *ClientModelSettings) (routes string) {
 	indexRoute := fmt.Sprintf(
 		`.when('%s', {
 			templateUrl: 'app/%s/%s',
@@ -330,57 +331,5 @@ func (m *Model) GetRoutes(a *ModelTokens) (routes string) {
 		})`, a.showRoute, a.idCol, m.Name, a.showViewFileName, a.controllerName, strings.Title(m.DisplayName))
 
 	routes = indexRoute + newRoute + editRoute + showRoute
-	return
-}
-
-func (a *App) GetVarsRoutes(t *AppToken) (fileName, JSCode string) {
-	fileName = t.varsRoutesFileName
-
-	routing := ""
-	for _, val := range a.Models {
-		routing += val.GetRoutes(val.GetTokens())
-	}
-
-	JSCode = fmt.Sprintf(
-		`app.constant('appName','%s');
-		app.constant('appVersion','%s');
-		app.constant('compName','%s');
-		app.constant('apiPath','../server');
-		app.value('appVars', {
-			user : {
-					sessionId:'',
-					memberId:'',
-					userName:'',
-					fbToken:'',
-					gpToken:'',
-					address:'',
-					isNewSignUp : false
-				},
-			fbAppId : _fbAppId,
-			gpClientId : _gpClientId,
-			fbSDKLoaded: false,
-			gpSDKLoaded: false,
-			fbSDKLoadedHndlr: null,
-			gpSDKLoadedHndlr: null
-		});
-
-		//Routes for Application
-		app.config(['$routeProvider', function($routeProvider) {	
-			$routeProvider
-			%s
-			.otherwise({
-			   redirectTo: '/home'
-			});
-		}]);`, a.Name, a.VersionNo, a.CompanyName, routing)
-	return
-}
-
-func (a *App) GetNavScriptLinks(t *AppToken) (navLinks, scriptLinks string) {
-	for _, mod := range a.Models {
-		mt := mod.GetTokens()
-		navLinks += fmt.Sprintf(`<li><a href="%s">%s</a></li>`, mt.indexRoute, mod.DisplayName)
-		scriptLinks += fmt.Sprintf(`<script src = "app/%s/%s"></script>`, mod.Name, mt.indexControllerFileName)
-		scriptLinks += fmt.Sprintf(`<script src = "app/%s/%s"></script>`, mod.Name, mt.controllerFileName)
-	}
 	return
 }

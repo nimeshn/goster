@@ -1,3 +1,4 @@
+{{define "base"}}
 <!DOCTYPE html>
 <html lang="en" ng-app="app" ng-controller="appController" itemscope itemtype="http://schema.org/Other">
 	<head>
@@ -23,7 +24,7 @@
 			</div>
 			<div class="collapse navbar-collapse" id="myNavbar">
 			  <ul class="nav navbar-nav" ng-show="IsLoggedIn()">
-				{{navLinks}}
+				{{template "navLinks"}}
 			  </ul>
 			  <ul class="nav navbar-nav navbar-right">
 				<li ng-click="logout()">
@@ -48,6 +49,7 @@
 		<script src = "app/app.module.js"></script>
 		<script src = "app/app.helper.js"></script>
 		<script src = "app/app.vars.routes.js"></script>
-		{{scriptLinks}}
+		{{template "scriptLinks"}}
 	</body>
 </html>
+{{end}}
