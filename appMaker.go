@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 var app *App
@@ -52,10 +53,10 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 	}
 	clientSettings := app.GetClientSettings()
 	//create app directories
-	fmt.Println("Creating App folder for ", app.Name)
+	fmt.Println("Creating App directories for", app.Name)
 	for name, dir := range clientSettings.directories {
 		Check(os.MkdirAll(dir, os.ModeDir))
-		fmt.Println("Created ", name, " folder:", dir)
+		fmt.Println(name, "folder:", dir)
 	}
 	SaveAppSettings(app)
 	//copy app helper js file
@@ -69,8 +70,6 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 		path.Join(clientSettings.directories["layout templates"], clientSettings.baseTemplateName))
 	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.indexTemplateName),
 		path.Join(clientSettings.directories["include templates"], clientSettings.indexTemplateName))
-	//prep the base.tmpl and index.tmpl to prepare index.html
-	InitTemplates(clientSettings.directories["templates"])
 	return
 }
 
@@ -90,10 +89,23 @@ func (app *App) MakeClient() {
 	//create index.tmpl
 	fileName, content = app.GetClientNavScriptLinks(t)
 	CreateFile(fileName, content)
+	//prep the base.tmpl and index.tmpl to prepare index.html
+	InitTemplates(t.directories["templates"])
 	//create index.html from the templates
-	RenderTemplateToFile(path.Join(t.directories["app"], t.clientHTMLFile), "base.tmpl", nil)
+	Check(RenderTemplateToFile(path.Join(t.directories["app"], t.clientHTMLFile), "base.tmpl", map[string]interface{}{"dummy": "dummy Data"}))
 	//
 	for _, mods := range app.Models {
+		if mods.DisplayName == "" {
+			mods.DisplayName = mods.Name
+		}
+		mods.DisplayName = strings.Title(mods.DisplayName)
+		for _, flds := range mods.Fields {
+			if flds.DisplayName == "" {
+				flds.DisplayName = flds.Name
+			}
+			flds.DisplayName = strings.Title(flds.DisplayName)
+		}
+
 		a := mods.GetClientSettings()
 		fileName, content = mods.GetClientController(a)
 		CreateFile(fileName, content)

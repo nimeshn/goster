@@ -19,28 +19,22 @@ func InitTemplates(templatesDir string) {
 	if templates == nil {
 		templates = make(map[string]*template.Template)
 	}
-	fmt.Println("searching for Templates in : ", path.Join(templatesDir+"/layouts/*.tmpl"))
 
 	layouts, err := filepath.Glob(path.Join(templatesDir + "/layouts/*.tmpl"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("searching for Templates in : ", path.Join(templatesDir+"/includes/*.tmpl"))
 	includes, err := filepath.Glob(path.Join(templatesDir + "/includes/*.tmpl"))
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println(layouts, includes)
 
 	// Generate our templates map from our layouts/ and includes/ directories
 	for _, layout := range layouts {
 		files := append(includes, layout)
 		templates[filepath.Base(layout)] = template.Must(template.ParseFiles(files...))
 	}
-
-	fmt.Println(templates)
 }
 
 func GetTemplate(templateName string) (tmpl *template.Template) {
@@ -62,5 +56,5 @@ func RenderTemplateToFile(fileName, templateName string, data map[string]interfa
 	fd, err := os.Create(fileName)
 	Check(err)
 	defer fd.Close()
-	return GetTemplate(templateName).ExecuteTemplate(fd, "base", data)
+	return GetTemplate(templateName).ExecuteTemplate(fd, "base", "")
 }

@@ -28,6 +28,7 @@ type ClientModelSettings struct {
 	newRoute                string
 	editRoute               string
 	showRoute               string
+	saveRoute               string
 	deleteRoute             string
 }
 
@@ -54,6 +55,7 @@ func (m *Model) GetClientSettings() *ClientModelSettings {
 		newRoute:                fmt.Sprintf("/%s/new", m.Name),
 		editRoute:               fmt.Sprintf("/%s/edit/", m.Name),
 		showRoute:               fmt.Sprintf("/%s/view/", m.Name),
+		saveRoute:               fmt.Sprintf("/%s", m.Name),
 		deleteRoute:             fmt.Sprintf("/%s/delete", m.Name),
 	}
 }
@@ -135,7 +137,7 @@ func (m *Model) GetClientShowView(a *ClientModelSettings) (fileName, htmlCode st
 
 	htmlCode += `<div class="row"><div class="col-sm-12">`
 	for _, fld := range m.Fields {
-		htmlCode += fmt.Sprintf(`<div class="row"><div class="col-sm-12"><h3 ng-bind="%s"></h3><p ng-bind="%s.%s"></p></div></div>`,
+		htmlCode += fmt.Sprintf(`<div class="row"><div class="col-sm-12"><h3>%s</h3><p ng-bind="%s.%s"></p></div></div>`,
 			fld.DisplayName, a.formData, fld.Name)
 	}
 	htmlCode += `</div></div>`
@@ -169,7 +171,7 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 			`ng-click="%s(x.id);"></span></a></div>`,
 			m.DisplayName, m.DisplayName, a.deleteFunc)
 		for _, fld := range m.Fields {
-			if fld.ShowInIndex {
+			if !fld.HideInIndex {
 				htmlCode += fmt.Sprintf(`<div class="col-sm-1"><span ng-bind="%s.%s"></span></div>`,
 					a.formData, fld.Name)
 			}
@@ -191,7 +193,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		`//function to check if the view is for new model entity
 		$scope.%s = function(){
 			return (!$scope.%s || $scope.%s == "" || $scope.%s == null);
-		}`, a.isNewFunc, a.idCol)
+		}`, a.isNewFunc, a.idCol, a.idCol, a.idCol)
 
 	//modelLoadFunc
 	loadFunc := fmt.Sprintf(
@@ -215,14 +217,14 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		`//function to save model entity
 		$scope.%s =function(){
 			$http({
-					method: %s()?'POST:'PUT'',
-					url: apiPath + "/%s",
+					method: %s()?'POST':'PUT',
+					url: apiPath + "%s",
 					data: $scope.%s
 				}).then(
 				function(response) {
 					if (response.status == 200){
 						clearAPIError($scope);
-						$location.path("/%s");
+						$location.path("%s");
 					} 
 					else {
 					  $scope.message = data.message;
@@ -231,7 +233,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 				function(response){
 					handleAPIError($scope, response);
 			  });
-		};`, a.saveFunc, a.isNewFunc, m.Name, a.formData, a.indexRoute)
+		};`, a.saveFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
 
 	JSCode = isNewFunc + loadFunc + saveFunc
 

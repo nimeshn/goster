@@ -32,8 +32,9 @@ func main() {
 	app.AddModel(&model)
 	app.MakeClient()
 
-	vals, _ := json.Marshal(app)
-	fmt.Println(string(vals))
+	json.Marshal(app)
+	//vals, _ := json.Marshal(app)
+	//fmt.Println(string(vals))
 
 	/*
 
