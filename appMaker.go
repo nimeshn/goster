@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/yosssi/gohtml"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -26,6 +28,12 @@ func CopyFile(srcPath, destPath string) {
 	buffStr, err := ioutil.ReadFile(srcPath)
 	Check(err)
 	Check(ioutil.WriteFile(destPath, buffStr, 0644))
+}
+
+func FormatHTMLFile(srcPath string) {
+	buffStr, err := ioutil.ReadFile(srcPath)
+	Check(err)
+	Check(ioutil.WriteFile(srcPath, []byte(gohtml.Format(string(buffStr))), 0644))
 }
 
 func CreateFile(fileName, content string) {
@@ -70,6 +78,9 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 		path.Join(clientSettings.directories["layout templates"], clientSettings.baseTemplateName))
 	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.indexTemplateName),
 		path.Join(clientSettings.directories["include templates"], clientSettings.indexTemplateName))
+	//copy Error
+	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.errorHandler),
+		path.Join(clientSettings.directories["errorHandler"], clientSettings.errorHandler))
 	return
 }
 
@@ -92,7 +103,8 @@ func (app *App) MakeClient() {
 	//prep the base.tmpl and index.tmpl to prepare index.html
 	InitTemplates(t.directories["templates"])
 	//create index.html from the templates
-	Check(RenderTemplateToFile(path.Join(t.directories["app"], t.clientHTMLFile), "base.tmpl", map[string]interface{}{"dummy": "dummy Data"}))
+	Check(RenderTemplateToFile(path.Join(t.directories["client"], t.clientHTMLFile), "base.tmpl", map[string]interface{}{"dummy": "dummy Data"}))
+	FormatHTMLFile(path.Join(t.directories["client"], t.clientHTMLFile))
 	//
 	for _, mods := range app.Models {
 		if mods.DisplayName == "" {
@@ -123,4 +135,21 @@ func (app *App) MakeClient() {
 		CreateFile(fileName, content)
 	}
 	SaveAppSettings(app)
+	//
+	filepath.Walk(app.AppDir, app.fileWalker)
+}
+
+func (app *App) fileWalker(path string, f os.FileInfo, err error) error {
+	cmdTxt := app.GetClientSettings().jsBeautifierCmd
+	//we are going to search for js files
+	if !f.IsDir() {
+		if filepath.Ext(path) == ".js" { //got a .js file
+			cmd := exec.Command(cmdTxt, fmt.Sprintf("--outfile=%s", filepath.Base(path)), filepath.Base(path))
+			cmd.Dir = filepath.Dir(path)
+			Check(cmd.Run())
+			fmt.Println("Beautified", path)
+		}
+	}
+	//fmt.Println(path, f)
+	return nil
 }

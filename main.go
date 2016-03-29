@@ -14,8 +14,8 @@ func rootHandler(rw http.ResponseWriter, req *http.Request) {
 func main() {
 
 	model := Model{
-		Name:        "posts",
-		DisplayName: "Users Posts",
+		Name:        "post",
+		DisplayName: "User Posts",
 		Fields: []*Field{
 			&Field{
 				Name:      "hdr",

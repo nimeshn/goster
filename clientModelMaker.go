@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/yosssi/gohtml"
 	"path"
 	"strings"
 )
@@ -125,7 +126,8 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 		htmlCode += `</div>`
 	}
 	htmlCode += `</div></form>`
-	htmlCode += `<div class="row"><hr></div>`
+	htmlCode += `<div class="row"><hr/></div>`
+	htmlCode = gohtml.Format(htmlCode)
 	return
 }
 
@@ -133,7 +135,7 @@ func (m *Model) GetClientShowView(a *ClientModelSettings) (fileName, htmlCode st
 	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.showViewFileName)
 
 	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div>`+
-		`<div class="row text-center"><h3>%s Details</h3><hr></div>`, m.DisplayName)
+		`<div class="row text-center"><h3>%s Details</h3><hr/></div>`, m.DisplayName)
 
 	htmlCode += `<div class="row"><div class="col-sm-12">`
 	for _, fld := range m.Fields {
@@ -141,7 +143,8 @@ func (m *Model) GetClientShowView(a *ClientModelSettings) (fileName, htmlCode st
 			fld.DisplayName, a.formData, fld.Name)
 	}
 	htmlCode += `</div></div>`
-	htmlCode += `<div class="row"><hr></div>`
+	htmlCode += `<div class="row"><hr/></div>`
+	htmlCode = gohtml.Format(htmlCode)
 	return
 }
 
@@ -149,7 +152,7 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.indexViewFileName)
 
 	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div>`+
-		`<div class="row text-center"><h3>%s List</h3><hr></div>`, m.DisplayName)
+		`<div class="row text-center"><h3>%s List</h3><hr/></div>`, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div class="row text-center"><a href="" ng-click="%s()"><span class="glyphicon glyphicon-refresh"/> Refresh</a>`+
 		`<a href="%s" class="col-sm-offset-1"><span class="glyphicon glyphicon-plus"/> New %s</a></div><br/>`,
@@ -181,7 +184,8 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 
 	}
 	htmlCode += `</div></div>`
-	htmlCode += `<div class="row"><hr></div>`
+	htmlCode += `<div class="row"><hr/></div>`
+	htmlCode = gohtml.Format(htmlCode)
 	return
 }
 
@@ -193,7 +197,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		`//function to check if the view is for new model entity
 		$scope.%s = function(){
 			return (!$scope.%s || $scope.%s == "" || $scope.%s == null);
-		}`, a.isNewFunc, a.idCol, a.idCol, a.idCol)
+		};`, a.isNewFunc, a.idCol, a.idCol, a.idCol)
 
 	//modelLoadFunc
 	loadFunc := fmt.Sprintf(
@@ -210,14 +214,14 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 				handleAPIError($scope, response);
 			}
 		);
-	}`, a.loadFunc, m.Name, a.idCol, a.formData, m.Name)
+	};`, a.loadFunc, m.Name, a.idCol, a.formData, m.Name)
 
 	//modelSaveFunc
 	saveFunc := fmt.Sprintf(
 		`//function to save model entity
 		$scope.%s =function(){
 			$http({
-					method: %s()?'POST':'PUT',
+					method: $scope.%s()?'POST':'PUT',
 					url: apiPath + "%s",
 					data: $scope.%s
 				}).then(
@@ -235,7 +239,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 			  });
 		};`, a.saveFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
 
-	JSCode = isNewFunc + loadFunc + saveFunc
+	JSCode = isNewFunc + fmt.Sprintln() + loadFunc + fmt.Sprintln() + saveFunc
 
 	JSCode = fmt.Sprintf(`app.controller('%s', 
 		['$scope', '$http', '$location', '$routeParams', 'apiPath', 'appVars',
@@ -243,7 +247,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		//check if the user has access to this page	
 		checkPageAccess($location, appVars.user);	
 		$scope.%s = $routeParams.%s;
-		if $scope.%s(){//New 
+		if ($scope.%s()){//New 
 			$scope.%s();
 		}else{
 			$scope.%s();
@@ -288,7 +292,7 @@ func (m *Model) GetClientIndexController(a *ClientModelSettings) (fileName, JSCo
 				);
 		};`, a.deleteFunc, a.idCol, a.deleteRoute, a.idCol, a.indexData, a.idCol)
 
-	JSCode = listFunc + deleteFunc
+	JSCode = listFunc + fmt.Sprintln() + deleteFunc
 
 	JSCode = fmt.Sprintf(`app.controller('%s', 
 		['$scope', '$http', '$location', 'apiPath', 'appVars',
@@ -332,6 +336,6 @@ func (m *Model) GetRoutes(a *ClientModelSettings) (routes string) {
 			title : '%s Details'
 		})`, a.showRoute, a.idCol, m.Name, a.showViewFileName, a.controllerName, strings.Title(m.DisplayName))
 
-	routes = indexRoute + newRoute + editRoute + showRoute
+	routes = indexRoute + fmt.Sprintln() + newRoute + fmt.Sprintln() + editRoute + fmt.Sprintln() + showRoute
 	return
 }

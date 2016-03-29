@@ -20,7 +20,9 @@ type ClientAppSettings struct {
 	baseTemplateName     string
 	indexTemplateName    string
 	clientHTMLFile       string
+	errorHandler         string
 	appTemplateSrcPath   string
+	jsBeautifierCmd      string
 	directories          map[string]string
 }
 
@@ -32,10 +34,13 @@ func (a *App) GetClientSettings() *ClientAppSettings {
 		baseTemplateName:     "base.tmpl",
 		indexTemplateName:    "index.tmpl",
 		clientHTMLFile:       "index.html",
+		errorHandler:         "errorhandler.view.html",
 		appTemplateSrcPath:   "appTemplate",
+		jsBeautifierCmd:      "jsbeautifier-go",
 		directories: map[string]string{
 			"client":            path.Join(a.AppDir, "client"),
 			"app":               path.Join(a.AppDir, "client/app"),
+			"errorHandler":      path.Join(a.AppDir, "client/app/error"),
 			"css":               path.Join(a.AppDir, "client/assets/css"),
 			"images":            path.Join(a.AppDir, "client/assets/images"),
 			"scripts":           path.Join(a.AppDir, "client/scripts"),
