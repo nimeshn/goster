@@ -155,7 +155,7 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 		`<div class="row text-center"><h3>%s List</h3><hr/></div>`, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div class="row text-center"><a href="" ng-click="%s()"><span class="glyphicon glyphicon-refresh"/> Refresh</a>`+
-		`<a href="%s" class="col-sm-offset-1"><span class="glyphicon glyphicon-plus"/> New %s</a></div><br/>`,
+		`<a href="#%s" class="col-sm-offset-1"><span class="glyphicon glyphicon-plus"/> New %s</a></div><br/>`,
 		a.loadFunc, a.newRoute, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div ng-if="%s.length==0" class="row"><div class="col-sm-12 text-center"><h3>0 Records Found.</h3></div></div>`,
@@ -164,10 +164,10 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 	htmlCode += fmt.Sprintf(`<div ng-if="%s.length>0" class="row"><div class="col-sm-12">`, a.formData)
 	if m.ViewType == List {
 		htmlCode += fmt.Sprintf(`<div class="row" ng-repeat="x in %s | orderBy:createdOn:reverse">`, a.formData)
-		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="%s{{x.id}}" alt="View %s" title="View %s">`+
+		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="#%s{{x.id}}" alt="View %s" title="View %s">`+
 			`<span class="glyphicon glyphicon-folder-open"></span></a></div>`,
 			a.showRoute, m.DisplayName, m.DisplayName)
-		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="%s{{x.id}}" alt="Edit %s" title="Edit %s">`+
+		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="#%s{{x.id}}" alt="Edit %s" title="Edit %s">`+
 			`<span class="glyphicon glyphicon-edit"></span></a></div>`,
 			a.editRoute, m.DisplayName, m.DisplayName)
 		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="" alt="Delete %s" title="Delete %s"><span class="glyphicon glyphicon-remove" `+
@@ -228,7 +228,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 				function(response) {
 					if (response.status == 200){
 						clearAPIError($scope);
-						$location.path("%s");
+						$location.path("#%s");
 					} 
 					else {
 					  $scope.message = data.message;
@@ -244,6 +244,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 	JSCode = fmt.Sprintf(`app.controller('%s', 
 		['$scope', '$http', '$location', '$routeParams', 'apiPath', 'appVars',
 			function($scope, $http, $location, $routeParams, apiPath, appVars) {
+		%s
 		//check if the user has access to this page	
 		checkPageAccess($location, appVars.user);	
 		$scope.%s = $routeParams.%s;
@@ -252,8 +253,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		}else{
 			$scope.%s();
 		}
-		%s
-	}]);`, a.controllerName, a.idCol, a.idCol, a.isNewFunc, a.newFunc, a.loadFunc, JSCode)
+	}]);`, a.controllerName, JSCode, a.idCol, a.idCol, a.isNewFunc, a.newFunc, a.loadFunc)
 
 	return
 }
@@ -297,12 +297,12 @@ func (m *Model) GetClientIndexController(a *ClientModelSettings) (fileName, JSCo
 	JSCode = fmt.Sprintf(`app.controller('%s', 
 		['$scope', '$http', '$location', 'apiPath', 'appVars',
 			function($scope, $http, $location, apiPath, appVars) {
+		%s
 		//check if the user has access to this page	
 		checkPageAccess($location, appVars.user);	
 
 		$scope.%s();
-		%s
-	}]);`, a.indexControllerName, a.indexFunc, JSCode)
+	}]);`, a.indexControllerName, JSCode, a.indexFunc)
 
 	return
 }
