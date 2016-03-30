@@ -64,7 +64,7 @@ func (m *Model) GetClientSettings() *ClientModelSettings {
 func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode string) {
 	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.editViewFileName)
 
-	htmlCode = `<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div><div class="row text-center">`
+	htmlCode = `<div class="row" ng-include="'/client/app/error/errorhandler.view.html'"></div><div class="row text-center">`
 	htmlCode += fmt.Sprintf(`<h3 ng-bind="(%s()?'New':'Edit') + ' %s'"></h3>`, a.isNewFunc, m.DisplayName)
 	htmlCode += `<hr/></div>`
 
@@ -134,7 +134,7 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 func (m *Model) GetClientShowView(a *ClientModelSettings) (fileName, htmlCode string) {
 	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.showViewFileName)
 
-	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div>`+
+	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/client/app/error/errorhandler.view.html'"></div>`+
 		`<div class="row text-center"><h3>%s Details</h3><hr/></div>`, m.DisplayName)
 
 	htmlCode += `<div class="row"><div class="col-sm-12">`
@@ -151,7 +151,7 @@ func (m *Model) GetClientShowView(a *ClientModelSettings) (fileName, htmlCode st
 func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode string) {
 	fileName = path.Join(m.appRef.GetClientSettings().directories["app"], m.Name, a.indexViewFileName)
 
-	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/app/error/errorhandler.view.html'"></div>`+
+	htmlCode = fmt.Sprintf(`<div class="row" ng-include="'/client/app/error/errorhandler.view.html'"></div>`+
 		`<div class="row text-center"><h3>%s List</h3><hr/></div>`, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div class="row text-center"><a href="" ng-click="%s()"><span class="glyphicon glyphicon-refresh"/> Refresh</a>`+

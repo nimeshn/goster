@@ -25,6 +25,7 @@ app.controller('appController',
 		};
 		//function to check if the user is logged in.
 		$scope.IsLoggedIn = function(){
+			return true;//remove this later nimesh
 			return !(appVars.user.memberId == null || appVars.user.memberId == "");
 		}
 		//Initialize the facebook object after its SDK js file is loaded

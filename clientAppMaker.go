@@ -63,7 +63,7 @@ func (a *App) GetClientNavScriptLinks(t *ClientAppSettings) (fileName, content s
 	navLinks, scriptLinks := fmt.Sprintln(), fmt.Sprintln()
 	for _, mod := range a.Models {
 		mt := mod.GetClientSettings()
-		navLinks += fmt.Sprintf(`<li><a href="%s">%s</a></li>`, mt.indexRoute, mod.DisplayName) + fmt.Sprintln()
+		navLinks += fmt.Sprintf(`<li><a href="#%s">%s</a></li>`, mt.indexRoute, mod.DisplayName) + fmt.Sprintln()
 		scriptLinks += fmt.Sprintf(`<script src = "app/%s/%s"></script>`, mod.Name, mt.indexControllerFileName) +
 			fmt.Sprintln() +
 			fmt.Sprintf(`<script src = "app/%s/%s"></script>`, mod.Name, mt.controllerFileName) +
