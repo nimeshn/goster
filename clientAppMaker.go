@@ -39,6 +39,16 @@ func (a *App) GetClientVarsRoutes(t *ClientAppSettings) (fileName, JSCode string
 		//Routes for Application
 		app.config(['$routeProvider', function($routeProvider) {	
 			$routeProvider
+			.when('/home', {
+			   templateUrl: 'app/home/home.view.htm',
+			   controller: 'homeController',
+			   title : 'Welcome'
+			})
+			.when('/login', {
+			   templateUrl: 'app/login/login.view.htm',
+			   controller: 'loginController',
+			   title : 'Login'
+			})
 			%s
 			.otherwise({
 			   redirectTo: '/home'

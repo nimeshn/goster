@@ -73,6 +73,12 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 	//copy app module js file
 	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.moduleJSFileName),
 		path.Join(clientSettings.directories["app"], clientSettings.moduleJSFileName))
+	//copy logo
+	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.logoFile),
+		path.Join(clientSettings.directories["images"], clientSettings.logoFile))
+	//copy logo
+	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.bootstrapSocialFile),
+		path.Join(clientSettings.directories["css"], clientSettings.bootstrapSocialFile))
 	//copy app index template & base template
 	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.baseTemplateName),
 		path.Join(clientSettings.directories["layout templates"], clientSettings.baseTemplateName))
@@ -81,6 +87,16 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 	//copy Error
 	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.errorHandler),
 		path.Join(clientSettings.directories["errorHandler"], clientSettings.errorHandler))
+	//Copy Home page
+	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.homeHTMLFile),
+		path.Join(clientSettings.directories["home"], clientSettings.homeHTMLFile))
+	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.homeControllerFile),
+		path.Join(clientSettings.directories["home"], clientSettings.homeControllerFile))
+	//Copy login page
+	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.loginHTMLFile),
+		path.Join(clientSettings.directories["login"], clientSettings.loginHTMLFile))
+	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.loginControllerFile),
+		path.Join(clientSettings.directories["login"], clientSettings.loginControllerFile))
 	return
 }
 
@@ -143,7 +159,7 @@ func (app *App) fileWalker(path string, f os.FileInfo, err error) error {
 	cmdTxt := app.GetClientSettings().jsBeautifierCmd
 	//we are going to search for js files
 	if !f.IsDir() {
-		if filepath.Ext(path) == ".js" { //got a .js file
+		if filepath.Ext(path) == ".js" || filepath.Ext(path) == ".json" { //got a .js file
 			cmd := exec.Command(cmdTxt, fmt.Sprintf("--outfile=%s", filepath.Base(path)), filepath.Base(path))
 			cmd.Dir = filepath.Dir(path)
 			Check(cmd.Run())

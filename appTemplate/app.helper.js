@@ -6,6 +6,7 @@ function getToken(userObj){
 	return ((userObj.fbToken != null && userObj.fbToken.length>0)?userObj.fbToken:userObj.gpToken);
 }
 function checkPageAccess($location, userObj){
+	return;//remove later
 	//if user not logged in then redirect to login page
 	if (userObj.memberId == ""){
 		$location.path("/login");

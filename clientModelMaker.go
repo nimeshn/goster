@@ -199,6 +199,23 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 			return (!$scope.%s || $scope.%s == "" || $scope.%s == null);
 		};`, a.isNewFunc, a.idCol, a.idCol, a.idCol)
 
+	//modelNewFunc
+	newFunc := fmt.Sprintf(
+		`//function to Get New model entity
+		$scope.%s =function(){
+		$http.get(apiPath + "%s")
+			.then(function(response) {
+				if (response.status == 200){
+					$scope.%s = response.data.%s;
+					clearAPIError($scope);
+				}
+			},
+			function(response) {
+				handleAPIError($scope, response);
+			}
+		);
+	};`, a.newFunc, a.newRoute, a.formData, m.Name)
+
 	//modelLoadFunc
 	loadFunc := fmt.Sprintf(
 		`//function to load model entity
@@ -239,7 +256,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 			  });
 		};`, a.saveFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
 
-	JSCode = isNewFunc + fmt.Sprintln() + loadFunc + fmt.Sprintln() + saveFunc
+	JSCode = isNewFunc + fmt.Sprintln() + newFunc + fmt.Sprintln() + loadFunc + fmt.Sprintln() + saveFunc
 
 	JSCode = fmt.Sprintf(`app.controller('%s', 
 		['$scope', '$http', '$location', '$routeParams', 'apiPath', 'appVars',
