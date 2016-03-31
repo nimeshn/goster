@@ -125,8 +125,17 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 		htmlCode += `</div>`
 		htmlCode += `</div>`
 	}
-	htmlCode += `</div></form>`
-	htmlCode += `<div class="row"><hr/></div>`
+	htmlCode += fmt.Sprintf(`<div class="form-group">
+		<div class="col-sm-offset-2 col-sm-4">
+			<a ng-href="{{'#%s'}}" alt="click to go back to %s List"><span class="glyphicon glyphicon-arrow-left"></span> Back</a>
+		</div>
+		<div class="col-sm-offset-2 col-sm-4">
+			<button type="submit" class="btn btn-link"><span class="glyphicon glyphicon-save"></span> Save</button>
+		</div>
+	</div>
+	</div></form>
+	<div class="row"><hr/></div>`, a.indexRoute, m.DisplayName)
+
 	htmlCode = gohtml.Format(htmlCode)
 	return
 }
@@ -139,9 +148,14 @@ func (m *Model) GetClientShowView(a *ClientModelSettings) (fileName, htmlCode st
 
 	htmlCode += `<div class="row"><div class="col-sm-12">`
 	for _, fld := range m.Fields {
-		htmlCode += fmt.Sprintf(`<div class="row"><div class="col-sm-12"><h3>%s</h3><p ng-bind="%s.%s"></p></div></div>`,
+		htmlCode += fmt.Sprintf(`<div class="row"><div class="col-sm-12"><h4>%s</h4><p ng-bind="%s.%s"></p></div></div>`,
 			fld.DisplayName, a.formData, fld.Name)
 	}
+	htmlCode += fmt.Sprintf(`<div class="row">
+			<div class="col-sm-12">
+				<a ng-href="{{'#%s'}}" alt="click to go back to %s List"><span class="glyphicon glyphicon-arrow-left"></span> Back</a>
+			</div>
+		</div>`, a.indexRoute, m.DisplayName)
 	htmlCode += `</div></div>`
 	htmlCode += `<div class="row"><hr/></div>`
 	htmlCode = gohtml.Format(htmlCode)
@@ -156,7 +170,7 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 
 	htmlCode += fmt.Sprintf(`<div class="row text-center"><a href="" ng-click="%s()"><span class="glyphicon glyphicon-refresh"/> Refresh</a>`+
 		`<a href="#%s" class="col-sm-offset-1"><span class="glyphicon glyphicon-plus"/> New %s</a></div><br/>`,
-		a.loadFunc, a.newRoute, m.DisplayName)
+		a.indexFunc, a.newRoute, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div ng-if="%s.length==0" class="row"><div class="col-sm-12 text-center"><h3>0 Records Found.</h3></div></div>`,
 		a.formData)

@@ -14,46 +14,51 @@ func GetAppSettings() map[string]string {
 }
 
 type ClientAppSettings struct {
-	helperJSFileName     string
-	moduleJSFileName     string
-	varsRoutesJSFileName string
-	logoFile             string
-	bootstrapSocialFile  string
-	baseTemplateName     string
-	indexTemplateName    string
-	clientHTMLFile       string
-	homeHTMLFile         string
-	homeControllerFile   string
-	loginHTMLFile        string
-	loginControllerFile  string
-	errorHandler         string
-	appTemplateSrcPath   string
-	jsBeautifierCmd      string
-	directories          map[string]string
+	helperJSFileName      string
+	moduleJSFileName      string
+	varsRoutesJSFileName  string
+	logoFile              string
+	bootstrapSocialFile   string
+	baseTemplateName      string
+	indexTemplateName     string
+	clientHTMLFile        string
+	homeHTMLFile          string
+	homeControllerFile    string
+	loginHTMLFile         string
+	loginControllerFile   string
+	profileHTMLFile       string
+	profileControllerFile string
+	errorHandler          string
+	appTemplateSrcPath    string
+	jsBeautifierCmd       string
+	directories           map[string]string
 }
 
 func (a *App) GetClientSettings() *ClientAppSettings {
 	return &ClientAppSettings{
-		helperJSFileName:     "app.helper.js",
-		moduleJSFileName:     "app.module.js",
-		varsRoutesJSFileName: "app.vars.routes.js",
-		logoFile:             "logo.png",
-		bootstrapSocialFile:  "bootstrap-social.css",
-		baseTemplateName:     "base.tmpl",
-		indexTemplateName:    "index.tmpl",
-		clientHTMLFile:       "index.html",
-		homeHTMLFile:         "home.view.htm",
-		homeControllerFile:   "home.controller.js",
-		loginHTMLFile:        "login.view.htm",
-		loginControllerFile:  "login.controller.js",
-		errorHandler:         "errorhandler.view.html",
-		appTemplateSrcPath:   "appTemplate",
-		jsBeautifierCmd:      "jsbeautifier-go",
+		helperJSFileName:      "app.helper.js",
+		moduleJSFileName:      "app.module.js",
+		varsRoutesJSFileName:  "app.vars.routes.js",
+		logoFile:              "logo.png",
+		bootstrapSocialFile:   "bootstrap-social.css",
+		baseTemplateName:      "base.tmpl",
+		indexTemplateName:     "index.tmpl",
+		clientHTMLFile:        "index.html",
+		homeHTMLFile:          "home.view.htm",
+		homeControllerFile:    "home.controller.js",
+		loginHTMLFile:         "login.view.htm",
+		loginControllerFile:   "login.controller.js",
+		profileHTMLFile:       "profile.view.htm",
+		profileControllerFile: "profile.controller.js",
+		errorHandler:          "errorhandler.view.html",
+		appTemplateSrcPath:    "appTemplate",
+		jsBeautifierCmd:       "jsbeautifier-go",
 		directories: map[string]string{
 			"client":            path.Join(a.AppDir, "client"),
 			"app":               path.Join(a.AppDir, "client/app"),
 			"home":              path.Join(a.AppDir, "client/app/home"),
 			"login":             path.Join(a.AppDir, "client/app/login"),
+			"profile":           path.Join(a.AppDir, "client/app/profile"),
 			"errorHandler":      path.Join(a.AppDir, "client/app/error"),
 			"css":               path.Join(a.AppDir, "client/assets/css"),
 			"images":            path.Join(a.AppDir, "client/assets/images"),

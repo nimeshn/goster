@@ -67,36 +67,74 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 		fmt.Println(name, "folder:", dir)
 	}
 	SaveAppSettings(app)
-	//copy app helper js file
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.helperJSFileName),
-		path.Join(clientSettings.directories["app"], clientSettings.helperJSFileName))
-	//copy app module js file
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.moduleJSFileName),
-		path.Join(clientSettings.directories["app"], clientSettings.moduleJSFileName))
-	//copy logo
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.logoFile),
-		path.Join(clientSettings.directories["images"], clientSettings.logoFile))
-	//copy logo
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.bootstrapSocialFile),
-		path.Join(clientSettings.directories["css"], clientSettings.bootstrapSocialFile))
-	//copy app index template & base template
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.baseTemplateName),
-		path.Join(clientSettings.directories["layout templates"], clientSettings.baseTemplateName))
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.indexTemplateName),
-		path.Join(clientSettings.directories["include templates"], clientSettings.indexTemplateName))
-	//copy Error
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.errorHandler),
-		path.Join(clientSettings.directories["errorHandler"], clientSettings.errorHandler))
-	//Copy Home page
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.homeHTMLFile),
-		path.Join(clientSettings.directories["home"], clientSettings.homeHTMLFile))
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.homeControllerFile),
-		path.Join(clientSettings.directories["home"], clientSettings.homeControllerFile))
-	//Copy login page
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.loginHTMLFile),
-		path.Join(clientSettings.directories["login"], clientSettings.loginHTMLFile))
-	CopyFile(path.Join(clientSettings.appTemplateSrcPath, clientSettings.loginControllerFile),
-		path.Join(clientSettings.directories["login"], clientSettings.loginControllerFile))
+	fileMap := map[string]string{
+		clientSettings.helperJSFileName:      clientSettings.directories["app"],
+		clientSettings.moduleJSFileName:      clientSettings.directories["app"],
+		clientSettings.logoFile:              clientSettings.directories["images"],
+		clientSettings.bootstrapSocialFile:   clientSettings.directories["css"],
+		clientSettings.baseTemplateName:      clientSettings.directories["layout templates"],
+		clientSettings.indexTemplateName:     clientSettings.directories["include templates"],
+		clientSettings.errorHandler:          clientSettings.directories["errorHandler"],
+		clientSettings.homeHTMLFile:          clientSettings.directories["home"],
+		clientSettings.homeControllerFile:    clientSettings.directories["home"],
+		clientSettings.loginHTMLFile:         clientSettings.directories["login"],
+		clientSettings.loginControllerFile:   clientSettings.directories["login"],
+		clientSettings.profileHTMLFile:       clientSettings.directories["profile"],
+		clientSettings.profileControllerFile: clientSettings.directories["profile"],
+	}
+	for filename, dir := range fileMap {
+		//copy app helper js file
+		CopyFile(path.Join(clientSettings.appTemplateSrcPath, filename),
+			path.Join(dir, filename))
+	}
+	user := &Model{
+		Name:        "user",
+		DisplayName: "User",
+		ViewType:    List,
+		Fields: []*Field{
+			&Field{
+				Name:        "fn",
+				DisplayName: "First Name",
+				Type:        String,
+				Validator:   &FieldValidation{Required: true, IsAlpha: true, MaxLen: 25},
+			},
+			&Field{
+				Name:        "ln",
+				DisplayName: "Last Name",
+				Type:        String,
+				Validator:   &FieldValidation{Required: true, IsAlpha: true, MaxLen: 25},
+			},
+			&Field{
+				Name:        "emlid",
+				DisplayName: "EmailId",
+				Type:        String,
+				Validator:   &FieldValidation{Required: true, Email: true, MaxLen: 255},
+			},
+			&Field{
+				Name:        "sex",
+				DisplayName: "Gender",
+				Type:        String,
+				Validator:   &FieldValidation{Required: true, IsAlpha: true, MaxLen: 1, MinLen: 1},
+			},
+			&Field{
+				Name:      "fbuid",
+				Type:      String,
+				Validator: &FieldValidation{MaxLen: 500},
+			},
+			&Field{
+				Name:      "gpuid",
+				Type:      String,
+				Validator: &FieldValidation{MaxLen: 500},
+			},
+			&Field{
+				Name:        "active",
+				DisplayName: "Active",
+				Type:        Boolean,
+				Validator:   &FieldValidation{Required: true, MaxLen: 1},
+			},
+		},
+	}
+	app.AddModel(user)
 	return
 }
 

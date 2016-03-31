@@ -18,12 +18,22 @@ func main() {
 		DisplayName: "User Posts",
 		Fields: []*Field{
 			&Field{
-				Name:      "hdr",
-				Validator: &FieldValidation{},
+				Name: "hdr",
+				Type: String,
+				Validator: &FieldValidation{
+					Required:       true,
+					IsAlphaNumeric: true,
+					MaxLen:         50,
+				},
 			},
 			&Field{
-				Name:      "descript",
-				Validator: &FieldValidation{},
+				Name: "descript",
+				Type: String,
+				Validator: &FieldValidation{
+					Required:       true,
+					IsAlphaNumeric: true,
+					MaxLen:         200,
+				},
 			},
 		},
 	}

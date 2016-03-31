@@ -1,5 +1,21 @@
-var _fbAppId =''
-var _gpClientId = ''
+var gapiLoaded = false;
+var _fbAppId= '<Enter Your FB AppId>';
+var _gpClientId = '<Enter Your Google Client Id>';
+
+function logConsole(msg){
+	console.log(msg);
+}
+
+function OnGapiLoaded(){
+	gapi.load('auth2', function() {//load in the auth2 api's, without it gapi.auth2 will be undefined
+		gapi.auth2.init({client_id:_gpClientId});
+		gapiLoaded = true;
+	});
+}
+
+function IsGapiLoaded(){
+	return gapiLoaded;
+}
 
 //
 function getToken(userObj){
