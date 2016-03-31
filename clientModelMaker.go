@@ -16,6 +16,7 @@ type ClientModelSettings struct {
 	isNewFunc               string
 	newFunc                 string
 	loadFunc                string
+	validateFunc            string
 	saveFunc                string
 	deleteFunc              string
 	controllerName          string
@@ -43,6 +44,7 @@ func (m *Model) GetClientSettings() *ClientModelSettings {
 		isNewFunc:               fmt.Sprintf("IsNew%s", strings.Title(m.Name)),
 		newFunc:                 fmt.Sprintf("New%s", strings.Title(m.Name)),
 		loadFunc:                fmt.Sprintf("Load%s", strings.Title(m.Name)),
+		validateFunc:            fmt.Sprintf("Validate%s", strings.Title(m.Name)),
 		saveFunc:                fmt.Sprintf("Save%s", strings.Title(m.Name)),
 		deleteFunc:              fmt.Sprintf("Delete%s", strings.Title(m.Name)),
 		controllerName:          fmt.Sprintf("%sController", m.Name),
@@ -247,10 +249,24 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		);
 	};`, a.loadFunc, m.Name, a.idCol, a.formData, m.Name)
 
+	validateFunc := ""
+	for _, fld := range m.Fields {
+		validateFunc += fld.GetClientValidation(a)
+	}
+	validateFunc = fmt.Sprintf(
+		`$scope.%s=function(){
+			$scope.errors = []
+			%s
+			return (length($scope.errors)>0);
+		}`, a.validateFunc, validateFunc)
 	//modelSaveFunc
 	saveFunc := fmt.Sprintf(
 		`//function to save model entity
 		$scope.%s =function(){
+			if (!%s()){
+				handleAPIError($scope, {status:404,data:{errors:$scope.errors}});
+				return
+			}
 			$http({
 					method: $scope.%s()?'POST':'PUT',
 					url: apiPath + "%s",
@@ -268,9 +284,10 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 				function(response){
 					handleAPIError($scope, response);
 			  });
-		};`, a.saveFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
+		};`, a.validateFunc, a.saveFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
 
-	JSCode = isNewFunc + fmt.Sprintln() + newFunc + fmt.Sprintln() + loadFunc + fmt.Sprintln() + saveFunc
+	JSCode = isNewFunc + fmt.Sprintln() + newFunc + fmt.Sprintln() + loadFunc +
+		fmt.Sprintln() + validateFunc + fmt.Sprintln() + saveFunc
 
 	JSCode = fmt.Sprintf(`app.controller('%s', 
 		['$scope', '$http', '$location', '$routeParams', 'apiPath', 'appVars',

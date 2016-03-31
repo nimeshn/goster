@@ -12,7 +12,7 @@ app.controller('profileController',
 		$http.get(apiPath + "/user/" + appVars.user.memberId)
 			.then(function(response) {
 				if (response.status == 200){
-					$scope.profile = response.data;
+					$scope.profileData = response.data;
 					clearAPIError($scope);
 				}				
 			},
@@ -23,7 +23,7 @@ app.controller('profileController',
 	}	
 	//
 	$scope.saveProfile =function(){
-		$http.put(apiPath + "/user", profile).
+		$http.put(apiPath + "/user", profileData).
 			then(function(response) {
 				if (response.status == 200){
 					//once profile is saved then it is not 

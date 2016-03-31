@@ -6,10 +6,8 @@ import (
 	"github.com/yosssi/gohtml"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-	"strings"
 )
 
 var app *App
@@ -144,66 +142,4 @@ func LoadApp(appDir string) (app *App) {
 	app = &App{}
 	json.Unmarshal([]byte(buffstr), app)
 	return
-}
-
-func (app *App) MakeClient() {
-	t := app.GetClientSettings()
-	//create app.var.routes.js
-	fileName, content := app.GetClientVarsRoutes(t)
-	CreateFile(fileName, content)
-	//create index.tmpl
-	fileName, content = app.GetClientNavScriptLinks(t)
-	CreateFile(fileName, content)
-	//prep the base.tmpl and index.tmpl to prepare index.html
-	InitTemplates(t.directories["templates"])
-	//create index.html from the templates
-	Check(RenderTemplateToFile(path.Join(t.directories["client"], t.clientHTMLFile), "base.tmpl", map[string]interface{}{"dummy": "dummy Data"}))
-	FormatHTMLFile(path.Join(t.directories["client"], t.clientHTMLFile))
-	//
-	for _, mods := range app.Models {
-		if mods.DisplayName == "" {
-			mods.DisplayName = mods.Name
-		}
-		mods.DisplayName = strings.Title(mods.DisplayName)
-		for _, flds := range mods.Fields {
-			if flds.DisplayName == "" {
-				flds.DisplayName = flds.Name
-			}
-			flds.DisplayName = strings.Title(flds.DisplayName)
-		}
-
-		a := mods.GetClientSettings()
-		fileName, content = mods.GetClientController(a)
-		CreateFile(fileName, content)
-		//
-		fileName, content = mods.GetClientIndexController(a)
-		CreateFile(fileName, content)
-		//
-		fileName, content = mods.GetClientShowView(a)
-		CreateFile(fileName, content)
-		//
-		fileName, content = mods.GetClientEditView(a)
-		CreateFile(fileName, content)
-		//
-		fileName, content = mods.GetClientIndexView(a)
-		CreateFile(fileName, content)
-	}
-	SaveAppSettings(app)
-	//
-	filepath.Walk(app.AppDir, app.fileWalker)
-}
-
-func (app *App) fileWalker(path string, f os.FileInfo, err error) error {
-	cmdTxt := app.GetClientSettings().jsBeautifierCmd
-	//we are going to search for js files
-	if !f.IsDir() {
-		if filepath.Ext(path) == ".js" || filepath.Ext(path) == ".json" { //got a .js file
-			cmd := exec.Command(cmdTxt, fmt.Sprintf("--outfile=%s", filepath.Base(path)), filepath.Base(path))
-			cmd.Dir = filepath.Dir(path)
-			Check(cmd.Run())
-			fmt.Println("Beautified", path)
-		}
-	}
-	//fmt.Println(path, f)
-	return nil
 }
