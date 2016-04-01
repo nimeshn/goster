@@ -55,7 +55,7 @@ function handleAPIError($scope, response){
 }
 
 function ValidateEmail(email){
-	pattern=new RegExp("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$");
+	pattern=new RegExp("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$");
 	return pattern.test(email);
 }
 
@@ -65,11 +65,11 @@ function ValidateUrl(url){
 }
 
 function IsAlpha(val){
-	pattern=new RegExp(/^[a-z]+$/i);
+	pattern=new RegExp("^[a-z]+$/i");
 	return pattern.test(val);
 }
 
 function IsAlphaNumeric(val){
-	pattern=new RegExp(/^[a-z0-9]+$/i);
+	pattern=new RegExp("^[a-z0-9]+$/i");
 	return pattern.test(val);
 }

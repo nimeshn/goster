@@ -12,7 +12,6 @@ func rootHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-
 	model := Model{
 		Name:        "post",
 		DisplayName: "User Posts",
@@ -43,6 +42,8 @@ func main() {
 	app := CreateNewApp("SampleApp", "Sample Application", "Bitwinger", "V1.0", "c:/gopath/src/github.com/nimeshn/SampleApp")
 	app.AddModel(&model)
 	app.MakeClient()
+
+	app.MakeServer()
 
 	json.Marshal(app)
 	//vals, _ := json.Marshal(app)

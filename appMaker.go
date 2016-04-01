@@ -18,6 +18,7 @@ func GetApp2() *App {
 
 func Check(err error) {
 	if err != nil {
+		fmt.Println(err)
 		panic(err)
 	}
 }
@@ -58,6 +59,7 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 		Models:      []*Model{},
 	}
 	clientSettings := app.GetClientSettings()
+	serverSettings := app.GetServerSettings()
 	//create app directories
 	fmt.Println("Creating App directories for", app.Name)
 	for name, dir := range clientSettings.directories {
@@ -79,6 +81,8 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 		clientSettings.loginControllerFile:   clientSettings.directories["login"],
 		clientSettings.profileHTMLFile:       clientSettings.directories["profile"],
 		clientSettings.profileControllerFile: clientSettings.directories["profile"],
+		serverSettings.mainGoFileName:        serverSettings.directories["server"],
+		serverSettings.helperGoFileName:      serverSettings.directories["server"],
 	}
 	for filename, dir := range fileMap {
 		//copy app helper js file

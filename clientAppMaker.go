@@ -11,7 +11,7 @@ import (
 
 func (a *App) GetClientVarsRoutes(t *ClientAppSettings) (fileName, JSCode string) {
 	fileName = path.Join(t.directories["app"], t.varsRoutesJSFileName)
-
+	s := a.GetServerSettings()
 	routing := ""
 	for _, mods := range a.Models {
 		routing += mods.GetRoutes(mods.GetClientSettings())
@@ -21,7 +21,7 @@ func (a *App) GetClientVarsRoutes(t *ClientAppSettings) (fileName, JSCode string
 		`app.constant('appName','%s');
 		app.constant('appVersion','%s');
 		app.constant('compName','%s');
-		app.constant('apiPath','../server');
+		app.constant('apiPath','..%s');
 		app.value('appVars', {
 			user : {
 					sessionId:'',
@@ -57,7 +57,7 @@ func (a *App) GetClientVarsRoutes(t *ClientAppSettings) (fileName, JSCode string
 			.otherwise({
 			   redirectTo: '/home'
 			});
-		}]);`, a.Name, a.VersionNo, a.CompanyName, routing)
+		}]);`, a.Name, a.VersionNo, a.CompanyName, s.apiPath, routing)
 	return
 }
 
@@ -123,10 +123,10 @@ func (app *App) MakeClient() {
 	}
 	SaveAppSettings(app)
 	//
-	filepath.Walk(app.AppDir, app.fileWalker)
+	filepath.Walk(app.AppDir, app.fileClientWalker)
 }
 
-func (app *App) fileWalker(path string, f os.FileInfo, err error) error {
+func (app *App) fileClientWalker(path string, f os.FileInfo, err error) error {
 	cmdTxt := app.GetClientSettings().jsBeautifierCmd
 	//we are going to search for js files
 	if !f.IsDir() {
