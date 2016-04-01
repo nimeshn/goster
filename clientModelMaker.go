@@ -72,60 +72,73 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 
 	htmlCode += fmt.Sprintf(`<form class="form-horizontal" role="form" name="%s" ng-submit="%s()"><div class="row">`, a.formName, a.saveFunc)
 	for _, fld := range m.Fields {
-		htmlCode += `<div class="form-group">`
-		htmlCode += fmt.Sprintf(`<label class="control-label col-sm-4" for="%s">%s:</label>`, fld.Name, fld.DisplayName)
-		htmlCode += `<div class="col-sm-8">`
-		htmlCode += fmt.Sprintf(`<input type="text" class="form-control" id="%s" placeholder="Enter %s" ng-model="%s.%s" title="%s" `,
-			fld.Name, fld.DisplayName, a.formData, fld.Name, fld.DisplayName)
-
+		if fld.HideInEdit {
+			continue
+		}
+		inputHtml := ""
 		if fld.Type == Boolean {
-			htmlCode += `type="checkbox" `
-		} else if fld.Type == Date {
-			htmlCode += `type="date" `
-		} else if fld.Type == Integer {
-			htmlCode += `type="number" step="1" `
-		} else if fld.Type == Float {
-			htmlCode += `type="number" step=".01" `
-		} else if fld.Type == String {
-			if fld.Validator.Email {
-				htmlCode += `type="email" `
-			} else if fld.Validator.Url {
-				htmlCode += `type="url" `
+			inputHtml = fmt.Sprintf(`<input id="%s" ng-model="%s.%s" title="%s" type="checkbox" `,
+				fld.Name, a.formData, fld.Name, fld.DisplayName)
+		} else {
+			inputHtml = fmt.Sprintf(`<input id="%s" ng-model="%s.%s" class="form-control" placeholder="Enter %s" title="%s" `,
+				fld.Name, a.formData, fld.Name, fld.DisplayName, fld.DisplayName)
+			if fld.Type == Date {
+				inputHtml += `type="date" `
+			} else if fld.Type == Integer {
+				inputHtml += `type="number" step="1" `
+			} else if fld.Type == Float {
+				inputHtml += `type="number" step=".01" `
+			} else if fld.Type == String {
+				if fld.Validator.Email {
+					inputHtml += `type="email" `
+				} else if fld.Validator.Url {
+					inputHtml += `type="url" `
+				} else {
+					inputHtml += `type="text" `
+				}
 			} else {
-				htmlCode += `type="text" `
+				inputHtml += `type="text" `
 			}
 		}
 
 		if fld.Validator.MinLen > 0 {
-			htmlCode += fmt.Sprintf(` minlength="%s"`, fld.Validator.MinLen)
+			inputHtml += fmt.Sprintf(` minlength="%d"`, fld.Validator.MinLen)
 		}
 		if fld.Validator.MaxLen > 0 {
-			htmlCode += fmt.Sprintf(` maxlength="%s"`, fld.Validator.MaxLen)
+			inputHtml += fmt.Sprintf(` maxlength="%d"`, fld.Validator.MaxLen)
 		}
 		if fld.Validator.MinValue > 0 {
-			htmlCode += fmt.Sprintf(` min="%s"`, fld.Validator.MinValue)
+			inputHtml += fmt.Sprintf(` min="%d"`, fld.Validator.MinValue)
 		}
 		if fld.Validator.MaxValue > 0 {
-			htmlCode += fmt.Sprintf(` max="%s"`, fld.Validator.MaxValue)
+			inputHtml += fmt.Sprintf(` max="%d"`, fld.Validator.MaxValue)
 		}
 		if fld.Validator.Email {
-			htmlCode += ` pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}$"`
+			inputHtml += ` pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$"`
 		}
 		if fld.Validator.Url {
-			htmlCode += ` pattern="https?://.+"`
+			inputHtml += ` pattern="https?://.+"`
 		}
 		if fld.Validator.IsAlpha {
-			htmlCode += ` pattern="[A-Za-z]"`
+			inputHtml += ` pattern="[A-Za-z]"`
 		}
 		if fld.Validator.IsAlphaNumeric {
-			htmlCode += ` pattern="[A-Za-z0-9]"`
+			inputHtml += ` pattern="[A-Za-z0-9]"`
 		}
 		if fld.Validator.Required {
-			htmlCode += ` required`
+			inputHtml += ` required`
 		}
-		htmlCode += `/>`
-		htmlCode += `</div>`
-		htmlCode += `</div>`
+		inputHtml += `/>`
+
+		if fld.Type == Boolean {
+			htmlCode += `<div class="form-group"><div class="col-sm-offset-4 col-sm-8">`
+			inputHtml = fmt.Sprintf(`<label class="checkbox-inline">%s%s</label>`, inputHtml, fld.DisplayName)
+		} else {
+			htmlCode += fmt.Sprintf(`<div class="form-group">
+			<label class="control-label col-sm-4" for="%s">%s:</label>
+			<div class="col-sm-8">`, fld.Name, fld.DisplayName)
+		}
+		htmlCode += inputHtml + `</div></div>`
 	}
 	htmlCode += fmt.Sprintf(`<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-4">
@@ -251,19 +264,22 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 
 	validateFunc := ""
 	for _, fld := range m.Fields {
+		if fld.HideInEdit {
+			continue
+		}
 		validateFunc += fld.GetClientValidation(a)
 	}
 	validateFunc = fmt.Sprintf(
 		`$scope.%s=function(){
 			$scope.errors = []
 			%s
-			return (length($scope.errors)>0);
-		}`, a.validateFunc, validateFunc)
+			return (length($scope.errors)==0);
+		};`, a.validateFunc, validateFunc)
 	//modelSaveFunc
 	saveFunc := fmt.Sprintf(
 		`//function to save model entity
 		$scope.%s =function(){
-			if (!%s()){
+			if (!$scope.%s()){
 				handleAPIError($scope, {status:404,data:{errors:$scope.errors}});
 				return
 			}
@@ -284,7 +300,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 				function(response){
 					handleAPIError($scope, response);
 			  });
-		};`, a.validateFunc, a.saveFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
+		};`, a.saveFunc, a.validateFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
 
 	JSCode = isNewFunc + fmt.Sprintln() + newFunc + fmt.Sprintln() + loadFunc +
 		fmt.Sprintln() + validateFunc + fmt.Sprintln() + saveFunc

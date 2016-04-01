@@ -18,8 +18,9 @@ func main() {
 		DisplayName: "User Posts",
 		Fields: []*Field{
 			&Field{
-				Name: "hdr",
-				Type: String,
+				Name:        "hdr",
+				DisplayName: "Title",
+				Type:        String,
 				Validator: &FieldValidation{
 					Required:       true,
 					IsAlphaNumeric: true,
@@ -27,8 +28,9 @@ func main() {
 				},
 			},
 			&Field{
-				Name: "descript",
-				Type: String,
+				Name:        "descript",
+				DisplayName: "Message",
+				Type:        String,
 				Validator: &FieldValidation{
 					Required:       true,
 					IsAlphaNumeric: true,

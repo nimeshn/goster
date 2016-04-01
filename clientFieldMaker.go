@@ -6,17 +6,17 @@ import (
 )
 
 func (fld *Field) GetClientValidation(a *ClientModelSettings) (htmlCode string) {
-	fieldName := fmt.Sprintf(`%s.%s`, a.formData, fld.Name)
+	fieldName := fmt.Sprintf(`$scope.%s.%s`, a.formData, fld.Name)
 
 	if fld.Validator.MinLen > 0 {
 		htmlCode += fmt.Sprintln() + fmt.Sprintf(
-			`if (%s!=null && length(%s)<%d){
+			`if (%s!=null && %s.length<%d){
 				$scope.errors.push('%s should have atleast %d characters.');
 			}`, fieldName, fieldName, fld.Validator.MinLen, fld.DisplayName, fld.Validator.MinLen)
 	}
 	if fld.Validator.MaxLen > 0 {
 		htmlCode += fmt.Sprintln() + fmt.Sprintf(
-			`if (%s!=null && length(%s)>%d){
+			`if (%s!=null && %s.length>%d){
 				$scope.errors.push('%s should have atmost %d characters.');
 			}`, fieldName, fieldName, fld.Validator.MaxLen, fld.DisplayName, fld.Validator.MaxLen)
 	}
@@ -34,25 +34,25 @@ func (fld *Field) GetClientValidation(a *ClientModelSettings) (htmlCode string) 
 	}
 	if fld.Validator.Email {
 		htmlCode += fmt.Sprintln() + fmt.Sprintf(
-			`if (%s!=null && ValidateEmail(%s)){
+			`if (%s!=null && !ValidateEmail(%s)){
 				$scope.errors.push('%s should be a valid Email Id.');
 			}`, fieldName, fieldName, fld.DisplayName)
 	}
 	if fld.Validator.Url {
 		htmlCode += fmt.Sprintln() + fmt.Sprintf(
-			`if (%s!=null && ValidateUrl(%s)){
+			`if (%s!=null && !ValidateUrl(%s)){
 				$scope.errors.push('%s should be a valid Url.');
 			}`, fieldName, fieldName, fld.DisplayName)
 	}
 	if fld.Validator.IsAlpha {
 		htmlCode += fmt.Sprintln() + fmt.Sprintf(
-			`if (%s!=null && IsAlpha(%s)){
+			`if (%s!=null && !IsAlpha(%s)){
 				$scope.errors.push('%s should only contains alphabets.');
 			}`, fieldName, fieldName, fld.DisplayName)
 	}
 	if fld.Validator.IsAlphaNumeric {
 		htmlCode += fmt.Sprintln() + fmt.Sprintf(
-			`if (%s!=null && IsAlphaNumeric(%s)){
+			`if (%s!=null && !IsAlphaNumeric(%s)){
 				$scope.errors.push('%s should only contains alphabets or numbers.');
 			}`, fieldName, fieldName, fld.DisplayName)
 	}

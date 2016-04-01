@@ -53,3 +53,23 @@ function handleAPIError($scope, response){
 		$scope.errors.apiMsg = "You are not logged in or your login session might have timedout. Please copy any changes to clipboard and click here to login.";
 	}
 }
+
+function ValidateEmail(email){
+	pattern=new RegExp("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$");
+	return pattern.test(email);
+}
+
+function ValidateUrl(url){
+	pattern=new RegExp("https?://.+");
+	return pattern.test(url);
+}
+
+function IsAlpha(val){
+	pattern=new RegExp(/^[a-z]+$/i);
+	return pattern.test(val);
+}
+
+function IsAlphaNumeric(val){
+	pattern=new RegExp(/^[a-z0-9]+$/i);
+	return pattern.test(val);
+}
