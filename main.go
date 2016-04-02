@@ -58,6 +58,7 @@ func main() {
 		fmt.Println(jsonModel)
 	*/
 	fmt.Println("Goster is running on http://127.0.0.1:8000")
+
 	//
 	http.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("client"))))
 	//

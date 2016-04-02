@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 func (fld *Field) GetServerValidation(a *ServerModelSettings) (goCode string) {
-	fieldName := fmt.Sprintf(`m.%s`, fld.Name)
+	fieldName := fmt.Sprintf(`m.%s`, strings.Title(fld.Name))
 
 	if fld.Validator.MinLen > 0 {
 		goCode += fmt.Sprintln() + fmt.Sprintf(

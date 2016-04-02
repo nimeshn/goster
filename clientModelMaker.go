@@ -120,10 +120,10 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 			inputHtml += ` pattern="https?://.+"`
 		}
 		if fld.Validator.IsAlpha {
-			inputHtml += ` pattern="[A-Za-z]"`
+			inputHtml += ` pattern="^[A-Za-z]+$"`
 		}
 		if fld.Validator.IsAlphaNumeric {
-			inputHtml += ` pattern="[A-Za-z0-9]"`
+			inputHtml += ` pattern="^[A-Za-z0-9]+$"`
 		}
 		if fld.Validator.Required {
 			inputHtml += ` required`
@@ -273,7 +273,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		`$scope.%s=function(){
 			$scope.errors = []
 			%s
-			return (length($scope.errors)==0);
+			return ($scope.errors.length==0);
 		};`, a.validateFunc, validateFunc)
 	//modelSaveFunc
 	saveFunc := fmt.Sprintf(

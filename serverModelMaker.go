@@ -52,19 +52,21 @@ func (m *Model) GetServerModel(a *ServerModelSettings) (fileName, goCode string)
 	fieldDefs := ""
 	fieldChecks := ""
 	for _, fld := range m.Fields {
+		field := strings.Title(fld.Name)
 		if fld.Type == Boolean {
-			fieldDefs += fmt.Sprintf(`%s bool`, fld.Name)
+			fieldDefs += fmt.Sprintf(`%s bool`, field)
 		} else if fld.Type == Date {
-			fieldDefs += fmt.Sprintf(`%s Time`, fld.Name)
+			fieldDefs += fmt.Sprintf(`%s Time`, field)
 		} else if fld.Type == Integer {
-			fieldDefs += fmt.Sprintf(`%s uint64`, fld.Name)
+			fieldDefs += fmt.Sprintf(`%s uint64`, field)
 		} else if fld.Type == Float {
-			fieldDefs += fmt.Sprintf(`%s float64`, fld.Name)
+			fieldDefs += fmt.Sprintf(`%s float64`, field)
 		} else if fld.Type == String {
-			fieldDefs += fmt.Sprintf(`%s string`, fld.Name)
+			fieldDefs += fmt.Sprintf(`%s string`, field)
 		} else {
-			fieldDefs += fmt.Sprintf(`%s string`, fld.Name)
+			fieldDefs += fmt.Sprintf(`%s string`, field)
 		}
+		fieldDefs += fmt.Sprintf(" `json:\"%s\"` ", fld.Name)
 
 		fieldDefs += ` //`
 		if fld.Validator.MinLen > 0 {
@@ -166,6 +168,8 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 	goCode = fmt.Sprintf(`package main
 		
 			import(
+				"encoding/json"
+				"fmt"
 				"net/http"
 			)
 
@@ -177,10 +181,18 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 				Name:"%s",
 			}
 
-			func (c *%s) HandleAction(rw http.ResponseWriter, req *http.Request) {
+			func (c *%s) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+				var model %s
+				switch req.Method {
+				case "POST", "PUT", "PATCH", "DELETE":
+					json.NewDecoder(req.Body).Decode(&model)
+				case "GET":
+				}
+				fmt.Println(model)
 			}
 
-			%s`, a.controllerName, a.controllerVar, a.controllerName, a.controllerName, a.controllerName, a.controllerName, goCode)
+			%s`, a.controllerName, a.controllerVar, a.controllerName, a.controllerName,
+		a.controllerName, a.controllerName, a.modelName, goCode)
 
 	return
 }
@@ -189,26 +201,28 @@ func (m *Model) GetServerRoutes(s *ServerAppSettings) (routes string) {
 	a := m.GetServerSettings()
 
 	indexRoute := fmt.Sprintf(
-		`http.HandleFunc("%s", %s.HandleAction)`,
-		path.Join(s.apiPath, a.indexRoute), a.controllerVar)
+		`http.Handle("%s/", http.StripPrefix("%s", %s))
+		http.Handle("%s", http.StripPrefix("%s", %s))`,
+		path.Join(s.apiPath, m.Name), s.apiPath, a.controllerVar,
+		path.Join(s.apiPath, m.Name), s.apiPath, a.controllerVar)
 
-	newRoute := fmt.Sprintf(
-		`http.HandleFunc("%s", %s.HandleAction)`,
-		path.Join(s.apiPath, a.newRoute), a.controllerVar)
+	/*	newRoute := fmt.Sprintf(
+			`http.Handle("%s", %s.HandleAction)`,
+			path.Join(s.apiPath, a.newRoute), a.controllerVar)
 
-	getRoute := fmt.Sprintf(
-		`http.HandleFunc("%s", %s.HandleAction)`,
-		path.Join(s.apiPath, a.getRoute), a.controllerVar)
+		getRoute := fmt.Sprintf(
+			`http.Handle("%s", %s.HandleAction)`,
+			path.Join(s.apiPath, a.getRoute), a.controllerVar)
 
-	saveRoute := fmt.Sprintf(
-		`http.HandleFunc("%s", %s.HandleAction)`,
-		path.Join(s.apiPath, a.saveRoute), a.controllerVar)
+		saveRoute := fmt.Sprintf(
+			`http.Handle("%s", %s.HandleAction)`,
+			path.Join(s.apiPath, a.saveRoute), a.controllerVar)
 
-	deleteRoute := fmt.Sprintf(
-		`http.HandleFunc("%s", %s.HandleAction)`,
-		path.Join(s.apiPath, a.deleteRoute), a.controllerVar)
-
-	routes = indexRoute + fmt.Sprintln() + newRoute + fmt.Sprintln() + getRoute +
-		fmt.Sprintln() + saveRoute + fmt.Sprintln() + deleteRoute
+		deleteRoute := fmt.Sprintf(
+			`http.Handle("%s", %s.HandleAction)`,
+			path.Join(s.apiPath, a.deleteRoute), a.controllerVar)
+	*/
+	routes = indexRoute + fmt.Sprintln() //+ newRoute + fmt.Sprintln() + getRoute +
+	//fmt.Sprintln() + saveRoute + fmt.Sprintln() + deleteRoute
 	return
 }

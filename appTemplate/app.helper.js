@@ -65,11 +65,11 @@ function ValidateUrl(url){
 }
 
 function IsAlpha(val){
-	pattern=new RegExp("^[a-z]+$/i");
+	pattern=new RegExp(/^[a-z]+$/i);
 	return pattern.test(val);
 }
 
 function IsAlphaNumeric(val){
-	pattern=new RegExp("^[a-z0-9]+$/i");
+	pattern=new RegExp(/^[a-z0-9]+$/i);
 	return pattern.test(val);
 }
