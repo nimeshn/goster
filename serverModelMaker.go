@@ -9,40 +9,40 @@ import (
 type ServerModelSettings struct {
 	idCol              string
 	indexFunc          string
-	newFunc            string
-	loadFunc           string
-	saveFunc           string
+	getFunc            string
+	createFunc         string
+	updateFunc         string
 	deleteFunc         string
+	indexRoute         string
+	getRoute           string
+	createRoute        string
+	updateRoute        string
+	deleteRoute        string
 	controllerVar      string
 	controllerName     string
 	controllerFileName string
 	modelName          string
 	modelFileName      string
-	indexRoute         string
-	getRoute           string
-	newRoute           string
-	saveRoute          string
-	deleteRoute        string
 }
 
 func (m *Model) GetServerSettings() *ServerModelSettings {
 	return &ServerModelSettings{
 		idCol:              fmt.Sprintf("%sId", m.Name),
 		indexFunc:          "GetAll",
-		newFunc:            "Create",
-		loadFunc:           "GetById",
-		saveFunc:           "Save",
+		getFunc:            "GetById",
+		createFunc:         "Create",
+		updateFunc:         "Update",
 		deleteFunc:         "DeleteById",
+		indexRoute:         fmt.Sprintf("/%s", m.Name),
+		getRoute:           fmt.Sprintf("/%s/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
+		createRoute:        fmt.Sprintf("/%s", m.Name),
+		updateRoute:        fmt.Sprintf("/%s", m.Name),
+		deleteRoute:        fmt.Sprintf("/%s/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
 		controllerVar:      fmt.Sprintf("%sController", m.Name),
 		controllerName:     fmt.Sprintf("%sController", strings.Title(m.Name)),
 		controllerFileName: fmt.Sprintf("%sController.go", m.Name),
 		modelName:          fmt.Sprintf("%sModel", strings.Title(m.Name)),
 		modelFileName:      fmt.Sprintf("%sModel.go", m.Name),
-		indexRoute:         fmt.Sprintf("/%s", m.Name),
-		getRoute:           fmt.Sprintf("/%s/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
-		newRoute:           fmt.Sprintf("/%s", m.Name),
-		saveRoute:          fmt.Sprintf("/%s", m.Name),
-		deleteRoute:        fmt.Sprintf("/%s/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
 	}
 }
 
@@ -137,7 +137,7 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 		}`, a.controllerName, a.indexFunc, m.Name, a.modelName, a.controllerName, a.indexFunc)
 
 	//modelNewFunc
-	newFunc := fmt.Sprintf(
+	createFunc := fmt.Sprintf(
 		`//function to Create New model entity
 		func (c *%s) %s(%s *%s) (ok bool, modelErrors []string){
 			fmt.Println("%s.%s executed")
@@ -146,18 +146,18 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 				return ok, modelErrors
 			}			
 			return
-		}`, a.controllerName, a.newFunc, m.Name, a.modelName, a.controllerName, a.newFunc, m.Name)
+		}`, a.controllerName, a.createFunc, m.Name, a.modelName, a.controllerName, a.createFunc, m.Name)
 
 	//modelLoadFunc
-	loadFunc := fmt.Sprintf(
+	getFunc := fmt.Sprintf(
 		`//function to Get model entity by id
 		func (c *%s) %s(%s uint64) (%s *%s){
 			fmt.Println("%s.%s executed")
 			return
-		}`, a.controllerName, a.loadFunc, a.idCol, m.Name, a.modelName, a.controllerName, a.loadFunc)
+		}`, a.controllerName, a.getFunc, a.idCol, m.Name, a.modelName, a.controllerName, a.getFunc)
 
 	//modelSaveFunc
-	saveFunc := fmt.Sprintf(
+	updateFunc := fmt.Sprintf(
 		`//function to save model entity
 		func (c *%s) %s(%s *%s) (ok bool, modelErrors []string){
 			fmt.Println("%s.%s executed")
@@ -166,7 +166,7 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 				return ok, modelErrors
 			}			
 			return
-		}`, a.controllerName, a.saveFunc, m.Name, a.modelName, a.controllerName, a.saveFunc, m.Name)
+		}`, a.controllerName, a.updateFunc, m.Name, a.modelName, a.controllerName, a.updateFunc, m.Name)
 
 	//modelSaveFunc
 	deleteFunc := fmt.Sprintf(
@@ -176,8 +176,8 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 			return true, nil
 		}`, a.controllerName, a.deleteFunc, a.idCol, a.controllerName, a.deleteFunc)
 
-	goCode = indexFunc + fmt.Sprintln() + newFunc + fmt.Sprintln() + loadFunc +
-		fmt.Sprintln() + saveFunc + fmt.Sprintln() + deleteFunc
+	goCode = indexFunc + fmt.Sprintln() + createFunc + fmt.Sprintln() + getFunc +
+		fmt.Sprintln() + updateFunc + fmt.Sprintln() + deleteFunc
 
 	formFld := ""
 	timePack := ""
@@ -240,19 +240,29 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 						%s
 					case strings.Contains(contentType, "multipart-form-data"):
 					}
+					if req.Method == "POST" {
+						c.%s(&model)
+					} else {
+						c.%s(&model)
+					}
 				case "GET":
 					if req.URL.String() == "" {
-						c.GetAll()
+						c.%s()
 					} else{
-						id, _ := strconv.ParseUint(req.PostFormValue("%s"), 10, 64)
-						c.GetById(id)
+						id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
+						c.%s(id)
 					}
 				case "DELETE":
+					if req.URL.String() != "" {
+						id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
+						c.%s(id)
+					}
 				case "PATCH":
 				}
 			}
 			%s`, timePack, a.controllerName, a.controllerVar, a.controllerName, a.controllerName,
-		a.controllerName, a.controllerName, a.modelName, formFld, a.idCol, goCode)
+		a.controllerName, a.controllerName, a.modelName, formFld, a.createFunc, a.updateFunc, a.indexFunc, a.getFunc,
+		a.deleteFunc, goCode)
 
 	return
 }
