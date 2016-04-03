@@ -19,8 +19,8 @@ type ServerModelSettings struct {
 	modelName          string
 	modelFileName      string
 	indexRoute         string
-	newRoute           string
 	getRoute           string
+	newRoute           string
 	saveRoute          string
 	deleteRoute        string
 }
@@ -28,21 +28,21 @@ type ServerModelSettings struct {
 func (m *Model) GetServerSettings() *ServerModelSettings {
 	return &ServerModelSettings{
 		idCol:              fmt.Sprintf("%sId", m.Name),
-		indexFunc:          fmt.Sprintf("Get%sList", strings.Title(m.Name)),
-		newFunc:            fmt.Sprintf("New%s", strings.Title(m.Name)),
-		loadFunc:           fmt.Sprintf("Load%s", strings.Title(m.Name)),
-		saveFunc:           fmt.Sprintf("Save%s", strings.Title(m.Name)),
-		deleteFunc:         fmt.Sprintf("Delete%s", strings.Title(m.Name)),
+		indexFunc:          "GetAll",
+		newFunc:            "Create",
+		loadFunc:           "GetById",
+		saveFunc:           "Save",
+		deleteFunc:         "DeleteById",
 		controllerVar:      fmt.Sprintf("%sController", m.Name),
 		controllerName:     fmt.Sprintf("%sController", strings.Title(m.Name)),
 		controllerFileName: fmt.Sprintf("%sController.go", m.Name),
 		modelName:          fmt.Sprintf("%sModel", strings.Title(m.Name)),
 		modelFileName:      fmt.Sprintf("%sModel.go", m.Name),
-		indexRoute:         fmt.Sprintf("/%s/list", m.Name),
-		newRoute:           fmt.Sprintf("/%s/new", m.Name),
+		indexRoute:         fmt.Sprintf("/%s", m.Name),
 		getRoute:           fmt.Sprintf("/%s/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
+		newRoute:           fmt.Sprintf("/%s", m.Name),
 		saveRoute:          fmt.Sprintf("/%s", m.Name),
-		deleteRoute:        fmt.Sprintf("/%s/delete/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
+		deleteRoute:        fmt.Sprintf("/%s/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
 	}
 }
 
@@ -51,12 +51,16 @@ func (m *Model) GetServerModel(a *ServerModelSettings) (fileName, goCode string)
 
 	fieldDefs := ""
 	fieldChecks := ""
+	imports := ""
 	for _, fld := range m.Fields {
 		field := strings.Title(fld.Name)
 		if fld.Type == Boolean {
 			fieldDefs += fmt.Sprintf(`%s bool`, field)
 		} else if fld.Type == Date {
-			fieldDefs += fmt.Sprintf(`%s Time`, field)
+			fieldDefs += fmt.Sprintf(`%s time.Time`, field)
+			imports = `import (
+					"time"
+					)`
 		} else if fld.Type == Integer {
 			fieldDefs += fmt.Sprintf(`%s uint64`, field)
 		} else if fld.Type == Float {
@@ -103,6 +107,8 @@ func (m *Model) GetServerModel(a *ServerModelSettings) (fileName, goCode string)
 
 	goCode = fmt.Sprintf(`package main
 
+			%s
+
 			type %s struct{
 				%s
 			}
@@ -114,7 +120,7 @@ func (m *Model) GetServerModel(a *ServerModelSettings) (fileName, goCode string)
 					modelErrors=nil
 				}
 				return
-			}`, a.modelName, fieldDefs, a.modelName, fieldChecks)
+			}`, imports, a.modelName, fieldDefs, a.modelName, fieldChecks)
 
 	return
 }
@@ -126,103 +132,140 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 	indexFunc := fmt.Sprintf(
 		`//function to Get List of model
 		func (c *%s) %s() (%sList []*%s){
+			fmt.Println("%s.%s executed")
 			return
-		}`, a.controllerName, a.indexFunc, m.Name, a.modelName)
+		}`, a.controllerName, a.indexFunc, m.Name, a.modelName, a.controllerName, a.indexFunc)
 
 	//modelNewFunc
 	newFunc := fmt.Sprintf(
-		`//function to Get New model entity
-		func (c *%s) %s() (%s *%s){
-			return
-		}`, a.controllerName, a.newFunc, m.Name, a.modelName)
-
-	//modelLoadFunc
-	loadFunc := fmt.Sprintf(
-		`//function to Get model entity by id
-		func (c *%s) %s(%s uint64) (%s *%s){
-			return
-		}`, a.controllerName, a.loadFunc, a.idCol, m.Name, a.modelName)
-
-	//modelSaveFunc
-	saveFunc := fmt.Sprintf(
-		`//function to Get model entity by id
+		`//function to Create New model entity
 		func (c *%s) %s(%s *%s) (ok bool, modelErrors []string){
+			fmt.Println("%s.%s executed")
 			ok, modelErrors = %s.Validate()
 			if !ok{
 				return ok, modelErrors
 			}			
 			return
-		}`, a.controllerName, a.saveFunc, m.Name, a.modelName, m.Name)
+		}`, a.controllerName, a.newFunc, m.Name, a.modelName, a.controllerName, a.newFunc, m.Name)
+
+	//modelLoadFunc
+	loadFunc := fmt.Sprintf(
+		`//function to Get model entity by id
+		func (c *%s) %s(%s uint64) (%s *%s){
+			fmt.Println("%s.%s executed")
+			return
+		}`, a.controllerName, a.loadFunc, a.idCol, m.Name, a.modelName, a.controllerName, a.loadFunc)
+
+	//modelSaveFunc
+	saveFunc := fmt.Sprintf(
+		`//function to save model entity
+		func (c *%s) %s(%s *%s) (ok bool, modelErrors []string){
+			fmt.Println("%s.%s executed")
+			ok, modelErrors = %s.Validate()
+			if !ok{
+				return ok, modelErrors
+			}			
+			return
+		}`, a.controllerName, a.saveFunc, m.Name, a.modelName, a.controllerName, a.saveFunc, m.Name)
 
 	//modelSaveFunc
 	deleteFunc := fmt.Sprintf(
-		`//function to Get model entity by id
+		`//function to delete model entity by id
 		func (c *%s) %s(%s uint64) (ok bool, err error){
-						
+			fmt.Println("%s.%s executed")						
 			return true, nil
-		}`, a.controllerName, a.deleteFunc, a.idCol)
+		}`, a.controllerName, a.deleteFunc, a.idCol, a.controllerName, a.deleteFunc)
 
 	goCode = indexFunc + fmt.Sprintln() + newFunc + fmt.Sprintln() + loadFunc +
 		fmt.Sprintln() + saveFunc + fmt.Sprintln() + deleteFunc
+
+	formFld := ""
+	timePack := ""
+	for _, fld := range m.Fields {
+		parse := ""
+		switch fld.Type {
+		case String:
+			formFld += fmt.Sprintf(`model.%s = req.PostFormValue("%s")`, strings.Title(fld.Name), fld.Name) + fmt.Sprintln()
+		case Date, Boolean, Float, Integer:
+			switch fld.Type {
+			case Date:
+				parse = fmt.Sprintf(`%s, _ := time.Parse(longTimeForm, req.PostFormValue("%s"))`, fld.Name, fld.Name)
+				timePack = `"time"`
+			case Boolean:
+				parse = fmt.Sprintf(`%s, _ := strconv.ParseBool(req.PostFormValue("%s"))`, fld.Name, fld.Name)
+			case Float:
+				parse = fmt.Sprintf(`%s, _ := strconv.ParseFloat(req.PostFormValue("%s"), 64)`, fld.Name, fld.Name)
+			case Integer:
+				parse = fmt.Sprintf(`%s, _ := strconv.ParseInt(req.PostFormValue("%s"), 10, 64)`, fld.Name, fld.Name)
+			}
+			formFld += fmt.Sprintf(
+				`if req.PostFormValue("%s") != "" {
+							%s
+							model.%s = %s
+				}`, fld.Name, parse, strings.Title(fld.Name), fld.Name) + fmt.Sprintln()
+		}
+	}
 
 	goCode = fmt.Sprintf(`package main
 		
 			import(
 				"encoding/json"
-				"fmt"
+				"strings"
 				"net/http"
+				"fmt"
+				"strconv"
+				%s
 			)
 
 			type %s struct{
 				Name string
 			}
 
-			var %s *%s = &%s{
-				Name:"%s",
-			}
+			var (
+				%s *%s = &%s{
+					Name:"%s",
+				}
+			)
 
 			func (c *%s) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				var model %s
 				switch req.Method {
-				case "POST", "PUT", "PATCH", "DELETE":
-					json.NewDecoder(req.Body).Decode(&model)
+				case "POST", "PUT" :
+					contentType := strings.ToLower(req.Header["Content-Type"][0])
+					switch {
+					case strings.Contains(contentType, "application/json"),
+						strings.Contains(contentType, "text/plain"):
+						json.NewDecoder(req.Body).Decode(&model)
+					case strings.Contains(contentType, "application/x-www-form-urlencoded"):
+						%s
+					case strings.Contains(contentType, "multipart-form-data"):
+					}
 				case "GET":
+					if req.URL.String() == "" {
+						c.GetAll()
+					} else{
+						id, _ := strconv.ParseUint(req.PostFormValue("%s"), 10, 64)
+						c.GetById(id)
+					}
+				case "DELETE":
+				case "PATCH":
 				}
-				fmt.Println(model)
 			}
-
-			%s`, a.controllerName, a.controllerVar, a.controllerName, a.controllerName,
-		a.controllerName, a.controllerName, a.modelName, goCode)
+			%s`, timePack, a.controllerName, a.controllerVar, a.controllerName, a.controllerName,
+		a.controllerName, a.controllerName, a.modelName, formFld, a.idCol, goCode)
 
 	return
 }
 
 func (m *Model) GetServerRoutes(s *ServerAppSettings) (routes string) {
 	a := m.GetServerSettings()
-
+	handlerPath := path.Join(s.apiPath, m.Name)
 	indexRoute := fmt.Sprintf(
-		`http.Handle("%s/", http.StripPrefix("%s", %s))
+		`http.Handle("%s/", http.StripPrefix("%s/", %s))
 		http.Handle("%s", http.StripPrefix("%s", %s))`,
-		path.Join(s.apiPath, m.Name), s.apiPath, a.controllerVar,
-		path.Join(s.apiPath, m.Name), s.apiPath, a.controllerVar)
+		handlerPath, handlerPath, a.controllerVar,
+		handlerPath, handlerPath, a.controllerVar)
 
-	/*	newRoute := fmt.Sprintf(
-			`http.Handle("%s", %s.HandleAction)`,
-			path.Join(s.apiPath, a.newRoute), a.controllerVar)
-
-		getRoute := fmt.Sprintf(
-			`http.Handle("%s", %s.HandleAction)`,
-			path.Join(s.apiPath, a.getRoute), a.controllerVar)
-
-		saveRoute := fmt.Sprintf(
-			`http.Handle("%s", %s.HandleAction)`,
-			path.Join(s.apiPath, a.saveRoute), a.controllerVar)
-
-		deleteRoute := fmt.Sprintf(
-			`http.Handle("%s", %s.HandleAction)`,
-			path.Join(s.apiPath, a.deleteRoute), a.controllerVar)
-	*/
-	routes = indexRoute + fmt.Sprintln() //+ newRoute + fmt.Sprintln() + getRoute +
-	//fmt.Sprintln() + saveRoute + fmt.Sprintln() + deleteRoute
+	routes = indexRoute + fmt.Sprintln()
 	return
 }

@@ -4,6 +4,8 @@ import (
 	"regexp"
 )
 
+const longTimeForm = "Apr 3, 2016 at 1:41pm (IST)"
+
 func ValidateEmail(email string) bool {
 	Re := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,3}$`)
 	return Re.MatchString(email)

@@ -27,18 +27,20 @@ func CopyFile(srcPath, destPath string) {
 	buffStr, err := ioutil.ReadFile(srcPath)
 	Check(err)
 	Check(ioutil.WriteFile(destPath, buffStr, 0644))
+	fmt.Println("Created", destPath)
 }
 
 func FormatHTMLFile(srcPath string) {
 	buffStr, err := ioutil.ReadFile(srcPath)
 	Check(err)
 	Check(ioutil.WriteFile(srcPath, []byte(gohtml.Format(string(buffStr))), 0644))
+	fmt.Println("Formatted", srcPath)
 }
 
 func CreateFile(fileName, content string) {
 	Check(os.MkdirAll(filepath.Dir(fileName), os.ModeDir))
-	//
 	Check(ioutil.WriteFile(fileName, []byte(content), 0644))
+	fmt.Println("Created", fileName)
 }
 
 func SaveAppSettings(app *App) {
@@ -134,6 +136,12 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 				Name:        "active",
 				DisplayName: "Active",
 				Type:        Boolean,
+				Validator:   &FieldValidation{},
+			},
+			&Field{
+				Name:        "createdAt",
+				DisplayName: "Created At",
+				Type:        Date,
 				Validator:   &FieldValidation{},
 			},
 		},
