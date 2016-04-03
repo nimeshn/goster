@@ -176,9 +176,6 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 			return true, nil
 		}`, a.controllerName, a.deleteFunc, a.idCol, a.controllerName, a.deleteFunc)
 
-	goCode = indexFunc + fmt.Sprintln() + createFunc + fmt.Sprintln() + getFunc +
-		fmt.Sprintln() + updateFunc + fmt.Sprintln() + deleteFunc
-
 	formFld := ""
 	timePack := ""
 	for _, fld := range m.Fields {
@@ -206,6 +203,42 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 		}
 	}
 
+	serveHTTP := fmt.Sprintf(
+		`func (c *%s) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+			var model %s
+			switch req.Method {
+			case "POST", "PUT" :
+				contentType := strings.ToLower(req.Header["Content-Type"][0])
+				switch {
+				case strings.Contains(contentType, "application/json"),
+					strings.Contains(contentType, "text/plain"):
+					json.NewDecoder(req.Body).Decode(&model)
+				case strings.Contains(contentType, "application/x-www-form-urlencoded"):
+					%s
+				case strings.Contains(contentType, "multipart-form-data"):
+				}
+				if req.Method == "POST" {
+					c.%s(&model)
+				} else {
+					c.%s(&model)
+				}
+			case "GET":
+				if req.URL.String() == "" {
+					c.%s()
+				} else{
+					id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
+					c.%s(id)
+				}
+			case "DELETE":
+				if req.URL.String() != "" {
+					id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
+					c.%s(id)
+				}
+			case "PATCH":
+			}
+		}`, a.controllerName, a.modelName, formFld, a.createFunc, a.updateFunc,
+		a.indexFunc, a.getFunc, a.deleteFunc)
+
 	goCode = fmt.Sprintf(`package main
 		
 			import(
@@ -225,44 +258,11 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 				%s *%s = &%s{
 					Name:"%s",
 				}
-			)
+			)`, timePack, a.controllerName, a.controllerVar, a.controllerName, a.controllerName,
+		a.controllerName)
 
-			func (c *%s) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-				var model %s
-				switch req.Method {
-				case "POST", "PUT" :
-					contentType := strings.ToLower(req.Header["Content-Type"][0])
-					switch {
-					case strings.Contains(contentType, "application/json"),
-						strings.Contains(contentType, "text/plain"):
-						json.NewDecoder(req.Body).Decode(&model)
-					case strings.Contains(contentType, "application/x-www-form-urlencoded"):
-						%s
-					case strings.Contains(contentType, "multipart-form-data"):
-					}
-					if req.Method == "POST" {
-						c.%s(&model)
-					} else {
-						c.%s(&model)
-					}
-				case "GET":
-					if req.URL.String() == "" {
-						c.%s()
-					} else{
-						id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
-						c.%s(id)
-					}
-				case "DELETE":
-					if req.URL.String() != "" {
-						id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
-						c.%s(id)
-					}
-				case "PATCH":
-				}
-			}
-			%s`, timePack, a.controllerName, a.controllerVar, a.controllerName, a.controllerName,
-		a.controllerName, a.controllerName, a.modelName, formFld, a.createFunc, a.updateFunc, a.indexFunc, a.getFunc,
-		a.deleteFunc, goCode)
+	goCode += fmt.Sprintln() + serveHTTP + fmt.Sprintln() + indexFunc + fmt.Sprintln() + getFunc + fmt.Sprintln() +
+		createFunc + fmt.Sprintln() + updateFunc + fmt.Sprintln() + deleteFunc
 
 	return
 }
