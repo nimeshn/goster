@@ -6,12 +6,12 @@ import (
 )
 
 type App struct {
-	Name        string
-	DisplayName string
-	CompanyName string
-	VersionNo   string
-	AppDir      string
-	Models      []*Model
+	Name        string   `json:"name"`
+	DisplayName string   `json:"displayName"`
+	CompanyName string   `json:"companyName"`
+	VersionNo   string   `json:"versionNo"`
+	AppDir      string   `json:"appDir"`
+	Models      []*Model `json:"models"`
 }
 
 func (a *App) AddModel(model *Model) {
@@ -20,6 +20,7 @@ func (a *App) AddModel(model *Model) {
 		errors.New(fmt.Sprintf("Add Failed as model %s exists already in the App", model.Name))
 		return
 	}
+	model.AutoGenerateFields()
 	model.appRef = a
 	a.Models = append(a.Models, model)
 }

@@ -89,9 +89,9 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 			} else if fld.Type == Float {
 				inputHtml += `type="number" step=".01" `
 			} else if fld.Type == String {
-				if fld.Validator.Email {
+				if fld.Validator != nil && fld.Validator.Email {
 					inputHtml += `type="email" `
-				} else if fld.Validator.Url {
+				} else if fld.Validator != nil && fld.Validator.Url {
 					inputHtml += `type="url" `
 				} else {
 					inputHtml += `type="text" `
@@ -101,32 +101,34 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 			}
 		}
 
-		if fld.Validator.MinLen > 0 {
-			inputHtml += fmt.Sprintf(` minlength="%d"`, fld.Validator.MinLen)
-		}
-		if fld.Validator.MaxLen > 0 {
-			inputHtml += fmt.Sprintf(` maxlength="%d"`, fld.Validator.MaxLen)
-		}
-		if fld.Validator.MinValue > 0 {
-			inputHtml += fmt.Sprintf(` min="%d"`, fld.Validator.MinValue)
-		}
-		if fld.Validator.MaxValue > 0 {
-			inputHtml += fmt.Sprintf(` max="%d"`, fld.Validator.MaxValue)
-		}
-		if fld.Validator.Email {
-			inputHtml += ` pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$"`
-		}
-		if fld.Validator.Url {
-			inputHtml += ` pattern="https?://.+"`
-		}
-		if fld.Validator.IsAlpha {
-			inputHtml += ` pattern="^[A-Za-z]+$"`
-		}
-		if fld.Validator.IsAlphaNumeric {
-			inputHtml += ` pattern="^[A-Za-z0-9]+$"`
-		}
-		if fld.Validator.Required {
-			inputHtml += ` required`
+		if fld.Validator != nil {
+			if fld.Validator.MinLen > 0 {
+				inputHtml += fmt.Sprintf(` minlength="%d"`, fld.Validator.MinLen)
+			}
+			if fld.Validator.MaxLen > 0 {
+				inputHtml += fmt.Sprintf(` maxlength="%d"`, fld.Validator.MaxLen)
+			}
+			if fld.Validator.MinValue > 0 {
+				inputHtml += fmt.Sprintf(` min="%d"`, fld.Validator.MinValue)
+			}
+			if fld.Validator.MaxValue > 0 {
+				inputHtml += fmt.Sprintf(` max="%d"`, fld.Validator.MaxValue)
+			}
+			if fld.Validator.Email {
+				inputHtml += ` pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$"`
+			}
+			if fld.Validator.Url {
+				inputHtml += ` pattern="https?://.+"`
+			}
+			if fld.Validator.IsAlpha {
+				inputHtml += ` pattern="^[A-Za-z]+$"`
+			}
+			if fld.Validator.IsAlphaNumeric {
+				inputHtml += ` pattern="^[A-Za-z0-9]+$"`
+			}
+			if fld.Validator.Required {
+				inputHtml += ` required`
+			}
 		}
 		inputHtml += `/>`
 

@@ -113,6 +113,7 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 				DisplayName: "EmailId",
 				Type:        String,
 				Validator:   &FieldValidation{Required: true, Email: true, MaxLen: 255},
+				Unique:      true,
 			},
 			&Field{
 				Name:        "sex",

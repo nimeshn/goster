@@ -6,6 +6,10 @@ import (
 )
 
 func (fld *Field) GetClientValidation(a *ClientModelSettings) (htmlCode string) {
+	if fld.Validator == nil {
+		return
+	}
+
 	fieldName := fmt.Sprintf(`$scope.%s.%s`, a.formData, fld.Name)
 
 	if fld.Validator.MinLen > 0 {

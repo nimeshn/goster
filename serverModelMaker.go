@@ -13,6 +13,8 @@ type ServerModelSettings struct {
 	createFunc         string
 	updateFunc         string
 	deleteFunc         string
+	getFuncFormat      string
+	deleteFuncFormat   string
 	indexRoute         string
 	getRoute           string
 	createRoute        string
@@ -33,6 +35,8 @@ func (m *Model) GetServerSettings() *ServerModelSettings {
 		createFunc:         "Create",
 		updateFunc:         "Update",
 		deleteFunc:         "DeleteById",
+		getFuncFormat:      "GetBy%s",
+		deleteFuncFormat:   "DeleteBy%s",
 		indexRoute:         fmt.Sprintf("/%s", m.Name),
 		getRoute:           fmt.Sprintf("/%s/:%s", m.Name, fmt.Sprintf("%sId", m.Name)),
 		createRoute:        fmt.Sprintf("/%s", m.Name),
@@ -46,14 +50,16 @@ func (m *Model) GetServerSettings() *ServerModelSettings {
 	}
 }
 
-func (m *Model) GetServerModel(a *ServerModelSettings) (fileName, goCode string) {
-	fileName = path.Join(m.appRef.GetServerSettings().directories["server"], a.modelFileName)
+func (m *Model) GetServerModel(sm *ServerModelSettings) (fileName, goCode string) {
+	fileName = path.Join(m.appRef.GetServerSettings().directories["server"], sm.modelFileName)
 
 	fieldDefs := ""
 	fieldChecks := ""
 	imports := ""
 	for _, fld := range m.Fields {
 		field := strings.Title(fld.Name)
+
+		fieldDefs += fmt.Sprintln()
 		if fld.Type == Boolean {
 			fieldDefs += fmt.Sprintf(`%s bool`, field)
 		} else if fld.Type == Date {
@@ -72,47 +78,48 @@ func (m *Model) GetServerModel(a *ServerModelSettings) (fileName, goCode string)
 		}
 		fieldDefs += fmt.Sprintf(" `json:\"%s\"` ", fld.Name)
 
-		fieldDefs += ` //`
-		if fld.Validator.MinLen > 0 {
-			fieldDefs += fmt.Sprintf(` minlength="%d",`, fld.Validator.MinLen)
+		if fld.Validator != nil {
+			fieldDefs += ` //`
+			if fld.Validator.MinLen > 0 {
+				fieldDefs += fmt.Sprintf(` minlength="%d",`, fld.Validator.MinLen)
+			}
+			if fld.Validator.MaxLen > 0 {
+				fieldDefs += fmt.Sprintf(` maxlength="%d",`, fld.Validator.MaxLen)
+			}
+			if fld.Validator.MinValue > 0 {
+				fieldDefs += fmt.Sprintf(` min="%d",`, fld.Validator.MinValue)
+			}
+			if fld.Validator.MaxValue > 0 {
+				fieldDefs += fmt.Sprintf(` max="%d",`, fld.Validator.MaxValue)
+			}
+			if fld.Validator.Email {
+				fieldDefs += ` valid email,`
+			}
+			if fld.Validator.Url {
+				fieldDefs += ` valid url,`
+			}
+			if fld.Validator.IsAlpha {
+				fieldDefs += ` isAlpha,`
+			}
+			if fld.Validator.IsAlphaNumeric {
+				fieldDefs += ` isAlphaNumeric,`
+			}
+			if fld.Validator.Required {
+				fieldDefs += ` required,`
+			}
 		}
-		if fld.Validator.MaxLen > 0 {
-			fieldDefs += fmt.Sprintf(` maxlength="%d",`, fld.Validator.MaxLen)
-		}
-		if fld.Validator.MinValue > 0 {
-			fieldDefs += fmt.Sprintf(` min="%d",`, fld.Validator.MinValue)
-		}
-		if fld.Validator.MaxValue > 0 {
-			fieldDefs += fmt.Sprintf(` max="%d",`, fld.Validator.MaxValue)
-		}
-		if fld.Validator.Email {
-			fieldDefs += ` valid email,`
-		}
-		if fld.Validator.Url {
-			fieldDefs += ` valid url,`
-		}
-		if fld.Validator.IsAlpha {
-			fieldDefs += ` isAlpha,`
-		}
-		if fld.Validator.IsAlphaNumeric {
-			fieldDefs += ` isAlphaNumeric,`
-		}
-		if fld.Validator.Required {
-			fieldDefs += ` required,`
-		}
-		fieldDefs += fmt.Sprintln()
 
-		fieldChecks += fld.GetServerValidation(a) + fmt.Sprintln()
+		fieldChecks += fld.GetServerValidation(sm) + fmt.Sprintln()
 	}
+	fieldDefs += fmt.Sprintln()
 
 	goCode = fmt.Sprintf(`package main
 
 			%s
 
-			type %s struct{
-				%s
-			}
+			type %s struct{%s}
 
+			//Validate data for this model
 			func (m *%s) Validate() (ok bool, modelErrors []string){
 				%s
 				ok = (len(modelErrors) >0)
@@ -120,13 +127,13 @@ func (m *Model) GetServerModel(a *ServerModelSettings) (fileName, goCode string)
 					modelErrors=nil
 				}
 				return
-			}`, imports, a.modelName, fieldDefs, a.modelName, fieldChecks)
+			}`, imports, sm.modelName, fieldDefs, sm.modelName, fieldChecks)
 
 	return
 }
 
-func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode string) {
-	fileName = path.Join(m.appRef.GetServerSettings().directories["server"], a.controllerFileName)
+func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode string) {
+	fileName = path.Join(m.appRef.GetServerSettings().directories["server"], sm.controllerFileName)
 
 	//modelListFunc
 	indexFunc := fmt.Sprintf(
@@ -134,7 +141,15 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 		func (c *%s) %s() (%sList []*%s){
 			fmt.Println("%s.%s executed")
 			return
-		}`, a.controllerName, a.indexFunc, m.Name, a.modelName, a.controllerName, a.indexFunc)
+		}`, sm.controllerName, sm.indexFunc, m.Name, sm.modelName, sm.controllerName, sm.indexFunc)
+
+	//modelLoadFunc
+	getFunc := fmt.Sprintf(
+		`//function to Get model entity by id
+		func (c *%s) %s(%s uint64) (%s *%s){
+			fmt.Println("%s.%s executed")
+			return
+		}`, sm.controllerName, sm.getFunc, sm.idCol, m.Name, sm.modelName, sm.controllerName, sm.getFunc)
 
 	//modelNewFunc
 	createFunc := fmt.Sprintf(
@@ -146,15 +161,7 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 				return ok, modelErrors
 			}			
 			return
-		}`, a.controllerName, a.createFunc, m.Name, a.modelName, a.controllerName, a.createFunc, m.Name)
-
-	//modelLoadFunc
-	getFunc := fmt.Sprintf(
-		`//function to Get model entity by id
-		func (c *%s) %s(%s uint64) (%s *%s){
-			fmt.Println("%s.%s executed")
-			return
-		}`, a.controllerName, a.getFunc, a.idCol, m.Name, a.modelName, a.controllerName, a.getFunc)
+		}`, sm.controllerName, sm.createFunc, m.Name, sm.modelName, sm.controllerName, sm.createFunc, m.Name)
 
 	//modelSaveFunc
 	updateFunc := fmt.Sprintf(
@@ -166,15 +173,15 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 				return ok, modelErrors
 			}			
 			return
-		}`, a.controllerName, a.updateFunc, m.Name, a.modelName, a.controllerName, a.updateFunc, m.Name)
+		}`, sm.controllerName, sm.updateFunc, m.Name, sm.modelName, sm.controllerName, sm.updateFunc, m.Name)
 
-	//modelSaveFunc
+	//modelDeleteFunc
 	deleteFunc := fmt.Sprintf(
 		`//function to delete model entity by id
 		func (c *%s) %s(%s uint64) (ok bool, err error){
 			fmt.Println("%s.%s executed")						
 			return true, nil
-		}`, a.controllerName, a.deleteFunc, a.idCol, a.controllerName, a.deleteFunc)
+		}`, sm.controllerName, sm.deleteFunc, sm.idCol, sm.controllerName, sm.deleteFunc)
 
 	formFld := ""
 	timePack := ""
@@ -193,7 +200,11 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 			case Float:
 				parse = fmt.Sprintf(`%s, _ := strconv.ParseFloat(req.PostFormValue("%s"), 64)`, fld.Name, fld.Name)
 			case Integer:
-				parse = fmt.Sprintf(`%s, _ := strconv.ParseInt(req.PostFormValue("%s"), 10, 64)`, fld.Name, fld.Name)
+				if fld.AutoGenerated {
+					parse = fmt.Sprintf(`%s, _ := strconv.ParseUint(req.PostFormValue("%s"), 10, 64)`, fld.Name, fld.Name)
+				} else {
+					parse = fmt.Sprintf(`%s, _ := strconv.ParseInt(req.PostFormValue("%s"), 10, 64)`, fld.Name, fld.Name)
+				}
 			}
 			formFld += fmt.Sprintf(
 				`if req.PostFormValue("%s") != "" {
@@ -203,9 +214,21 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 		}
 	}
 
+	uniqueGet, uniqueDel, uniqueFuncs := m.GetUniqueFieldAction(sm)
+
 	serveHTTP := fmt.Sprintf(
-		`func (c *%s) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+		`//http Request handler for %s
+		func (c *%s) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			var model %s
+			urlArr := strings.Split(req.URL.String(), "/")
+			requestURL, requestField := "", ""
+			if len(urlArr) > 1{
+				requestField = urlArr[0]
+				requestURL = urlArr[1]
+			}else{
+				requestURL = urlArr[0]
+			}
+
 			switch req.Method {
 			case "POST", "PUT" :
 				contentType := strings.ToLower(req.Header["Content-Type"][0])
@@ -223,21 +246,27 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 					c.%s(&model)
 				}
 			case "GET":
-				if req.URL.String() == "" {
-					c.%s()
-				} else{
-					id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
-					c.%s(id)
+				if requestField == "" {
+					if requestURL == "" {
+						c.%s()
+					} else{
+						id, _ := strconv.ParseUint(requestURL, 10, 64)
+						c.%s(id)
+					}
 				}
+				%s
 			case "DELETE":
-				if req.URL.String() != "" {
-					id, _ := strconv.ParseUint(req.URL.String(), 10, 64)
-					c.%s(id)
+				if requestField == "" {
+					if requestURL != "" {
+						id, _ := strconv.ParseUint(requestURL, 10, 64)
+						c.%s(id)
+					}
 				}
+				%s
 			case "PATCH":
 			}
-		}`, a.controllerName, a.modelName, formFld, a.createFunc, a.updateFunc,
-		a.indexFunc, a.getFunc, a.deleteFunc)
+		}`, m.Name, sm.controllerName, sm.modelName, formFld, sm.createFunc, sm.updateFunc,
+		sm.indexFunc, sm.getFunc, uniqueGet, sm.deleteFunc, uniqueDel)
 
 	goCode = fmt.Sprintf(`package main
 		
@@ -258,23 +287,91 @@ func (m *Model) GetServerController(a *ServerModelSettings) (fileName, goCode st
 				%s *%s = &%s{
 					Name:"%s",
 				}
-			)`, timePack, a.controllerName, a.controllerVar, a.controllerName, a.controllerName,
-		a.controllerName)
+			)`, timePack, sm.controllerName, sm.controllerVar, sm.controllerName, sm.controllerName,
+		sm.controllerName)
 
 	goCode += fmt.Sprintln() + serveHTTP + fmt.Sprintln() + indexFunc + fmt.Sprintln() + getFunc + fmt.Sprintln() +
-		createFunc + fmt.Sprintln() + updateFunc + fmt.Sprintln() + deleteFunc
+		createFunc + fmt.Sprintln() + updateFunc + fmt.Sprintln() + deleteFunc + fmt.Sprintln() + uniqueFuncs
 
 	return
 }
 
-func (m *Model) GetServerRoutes(s *ServerAppSettings) (routes string) {
-	a := m.GetServerSettings()
-	handlerPath := path.Join(s.apiPath, m.Name)
+func (m *Model) GetUniqueFieldAction(sm *ServerModelSettings) (get, del string, funcs string) {
+	for _, fld := range m.Fields {
+		if !fld.Unique {
+			continue
+		}
+		parse := ""
+		dataType := ""
+		getFunc := fmt.Sprintf(sm.getFuncFormat, strings.Title(fld.Name))
+		deleteFunc := fmt.Sprintf(sm.deleteFuncFormat, strings.Title(fld.Name))
+		switch fld.Type {
+		case String:
+			parse = fmt.Sprintf(`%s := requestURL`, fld.Name)
+			dataType = "string"
+		case Date, Boolean, Float, Integer:
+			switch fld.Type {
+			case Date:
+				parse = fmt.Sprintf(`%s, _ := time.Parse(longTimeForm, requestURL)`, fld.Name, fld.Name)
+				dataType = "time.Time"
+			case Boolean:
+				parse = fmt.Sprintf(`%s, _ := strconv.ParseBool(requestURL)`, fld.Name, fld.Name)
+				dataType = "bool"
+			case Float:
+				parse = fmt.Sprintf(`%s, _ := strconv.ParseFloat(requestURL, 64)`, fld.Name, fld.Name)
+				dataType = "float64"
+			case Integer:
+				if fld.AutoGenerated {
+					parse = fmt.Sprintf(`%s, _ := strconv.ParseUint(requestURL, 10, 64)`, fld.Name, fld.Name)
+					dataType = "int64"
+				} else {
+					parse = fmt.Sprintf(`%s, _ := strconv.ParseInt(requestURL, 10, 64)`, fld.Name, fld.Name)
+					dataType = "uint64"
+				}
+			}
+		}
+		get += fmt.Sprintf(
+			`if requestField == "%s" {
+				if requestURL != "" {
+					%s
+					c.%s(%s)
+				}
+			}`, fld.Name, parse, getFunc, fld.Name) + fmt.Sprintln()
+		del += fmt.Sprintf(
+			`if requestField == "%s" {
+				if requestURL != "" {
+					%s
+					c.%s(%s)
+				}
+			}`, fld.Name, parse, deleteFunc, fld.Name) + fmt.Sprintln()
+
+		funcs += fmt.Sprintf(
+			`//function to Get model entity
+			func (c *%s) %s(%s %s) (%s *%s){
+				fmt.Println("%s.%s executed")
+				return
+			}`, sm.controllerName, getFunc, fld.Name, dataType, m.Name, sm.modelName,
+			sm.controllerName, getFunc) + fmt.Sprintln() +
+
+			fmt.Sprintf(
+				`//function to delete model entity
+			func (c *%s) %s(%s %s) (ok bool, err error){
+				fmt.Println("%s.%s executed")						
+				return true, nil
+			}`, sm.controllerName, deleteFunc, fld.Name, dataType, sm.controllerName, deleteFunc)
+	}
+	return
+}
+
+func (m *Model) GetServerRoutes(sa *ServerAppSettings) (routes string) {
+	ss := m.GetServerSettings()
+	handlerPath := path.Join(sa.apiPath, m.Name)
 	indexRoute := fmt.Sprintf(
-		`http.Handle("%s/", http.StripPrefix("%s/", %s))
+		`//routes handler for %s
+		http.Handle("%s/", http.StripPrefix("%s/", %s))
 		http.Handle("%s", http.StripPrefix("%s", %s))`,
-		handlerPath, handlerPath, a.controllerVar,
-		handlerPath, handlerPath, a.controllerVar)
+		m.Name, handlerPath, handlerPath, ss.controllerVar,
+		handlerPath, handlerPath, ss.controllerVar)
 
 	routes = indexRoute + fmt.Sprintln()
 	return

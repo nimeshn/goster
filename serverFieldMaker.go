@@ -6,8 +6,11 @@ import (
 )
 
 func (fld *Field) GetServerValidation(a *ServerModelSettings) (goCode string) {
+	if fld.Validator == nil {
+		return
+	}
 	fieldName := fmt.Sprintf(`m.%s`, strings.Title(fld.Name))
-
+	goCode += fmt.Sprintf(`//Validate %s`, fld.DisplayName)
 	if fld.Validator.MinLen > 0 {
 		goCode += fmt.Sprintln() + fmt.Sprintf(
 			`if %s!="" && len(%s)<%d {
