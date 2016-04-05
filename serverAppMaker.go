@@ -17,16 +17,43 @@ func (a *App) GetServerRoutes(t *ServerAppSettings) (fileName, GoCode string) {
 		routing += mods.GetServerRoutes(t) + fmt.Sprintln()
 	}
 
+	responseStruct := "type Response struct {" + fmt.Sprintln() +
+		"Data   interface{} `json:\"data\"`" + fmt.Sprintln() +
+		"Errors interface{} `json:\"errors\"`" + fmt.Sprintln() +
+		"}"
 	GoCode = fmt.Sprintf(
 		`package main
 
-		import(
+		import (
+			"encoding/json"
 			"net/http"
 		)
 
+		%s
+
+		func SendResult(rw http.ResponseWriter, result Response, err error) {
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			resultJson, err := json.Marshal(result)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			rw.Header().Set("Content-Type", "application/json")
+			if result.Errors != nil {
+				rw.WriteHeader(http.StatusBadRequest)
+			} else if result.Data == nil{
+				rw.WriteHeader(http.StatusNotFound)
+			}
+
+			rw.Write(resultJson)
+		}
+
 		func MakeActionRoutes() {
 			%s
-		}`, routing)
+		}`, responseStruct, routing)
 	return
 }
 

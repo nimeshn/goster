@@ -145,7 +145,7 @@ func (m *Model) GetServerModel(sm *ServerModelSettings) (fileName, goCode string
 			//Validate data for this model
 			func (m *%s) Validate() (ok bool, modelErrors []string){
 				%s
-				ok = (len(modelErrors) >0)
+				ok = (len(modelErrors) == 0)
 				if ok {
 					modelErrors=nil
 				}
@@ -193,31 +193,50 @@ func (m *Model) GetUniqueFieldAction(sm *ServerModelSettings) (get, del string, 
 			`if requestField == "%s" {
 				if requestURL != "" {
 					%s
-					c.%s(%s)
+					result, err:=c.%s(%s)
+					SendResult(rw, Response{Data:result}, err)
+					return
 				}
 			}`, fld.Name, parse, getFunc, fld.Name) + fmt.Sprintln()
 		del += fmt.Sprintf(
 			`if requestField == "%s" {
 				if requestURL != "" {
 					%s
-					c.%s(%s)
+					result, err:=c.%s(%s)
+					SendResult(rw, Response{Data:result}, err)
+					return
 				}
 			}`, fld.Name, parse, deleteFunc, fld.Name) + fmt.Sprintln()
 
 		funcs += fmt.Sprintf(
 			`//function to Get model entity
-			func (c *%s) %s(%s %s) (%s *%s){
+			func (c *%s) %s(%s %s) (%s *%s, err error){
+				%s = new(%s)
+				err=GetDB().QueryRow(c.Queries["mysql"]["getBy%s"], %s).
+					Scan(%s)
+				if err!=nil{
+					%s = nil
+					if err == sql.ErrNoRows {
+						err=nil
+					}
+					return
+				}
 				fmt.Println("%s.%s executed")
 				return
 			}`, sm.controllerName, getFunc, fld.Name, dataType, m.Name, sm.modelName,
+			m.Name, sm.modelName, strings.Title(fld.Name), fld.Name, sm.scanParams, m.Name,
 			sm.controllerName, getFunc) + fmt.Sprintln() +
 
 			fmt.Sprintf(
 				`//function to delete model entity
 			func (c *%s) %s(%s %s) (ok bool, err error){
+				_, err = GetDB().Exec(c.Queries["mysql"]["deleteBy%s"], %s)
+				if err!=nil{return}
 				fmt.Println("%s.%s executed")						
 				return true, nil
-			}`, sm.controllerName, deleteFunc, fld.Name, dataType, sm.controllerName, deleteFunc)
+			}`, sm.controllerName, deleteFunc, fld.Name, dataType,
+				strings.Title(fld.Name), fld.Name,
+				sm.controllerName, deleteFunc)
 	}
 	return
 }
@@ -281,17 +300,25 @@ func (m *Model) GetServeHTTP(sm *ServerModelSettings) (timePack, uniqueFuncs, se
 				case strings.Contains(contentType, "multipart-form-data"):
 				}
 				if req.Method == "POST" {
-					c.%s(&model)
+					result, err:=c.%s(&model)
+					SendResult(rw, Response{Errors:result}, err)
+					return
 				} else {
-					c.%s(&model)
+					result, err:=c.%s(&model)
+					SendResult(rw, Response{Errors:result}, err)
+					return
 				}
 			case "GET":
 				if requestField == "" {
 					if requestURL == "" {
-						c.%s()
+						result, err:=c.%s()
+						SendResult(rw, Response{Data:result}, err)
+						return
 					} else{
 						id, _ := strconv.ParseUint(requestURL, 10, 64)
-						c.%s(id)
+						result, err:=c.%s(id)
+						SendResult(rw, Response{Data:result}, err)
+						return
 					}
 				}
 				%s
@@ -299,18 +326,32 @@ func (m *Model) GetServeHTTP(sm *ServerModelSettings) (timePack, uniqueFuncs, se
 				if requestField == "" {
 					if requestURL != "" {
 						id, _ := strconv.ParseUint(requestURL, 10, 64)
-						c.%s(id)
+						result, err:=c.%s(id)
+						SendResult(rw, Response{Data:result}, err)
+						return
 					}
 				}
 				%s
 			case "PATCH":
 			}
+
+			http.Error(rw, "Invalid resource url", http.StatusNotFound)
 		}`, m.Name, sm.controllerName, sm.modelName, formFld, sm.createFunc, sm.updateFunc,
 		sm.indexFunc, sm.getFunc, uniqueGet, sm.deleteFunc, uniqueDel)
 	return
 }
 
 func (m *Model) GetServerQueries(sm *ServerModelSettings) (queries string) {
+	uniqueQry := ""
+	for _, fld := range m.Fields {
+		if fld.Unique {
+			uniqueQry += fmt.Sprintf(
+				`"getBy%s":    "SELECT %s FROM %s WHERE %s = ?",
+				"deleteBy%s": "DELETE %s WHERE %s = ?",`,
+				strings.Title(fld.Name), sm.selectList, m.Name, fld.Name,
+				strings.Title(fld.Name), m.Name, fld.Name) + fmt.Sprintln()
+		}
+	}
 	queries = fmt.Sprintf(
 		`"mysql": map[string]string{
 			"index":  "SELECT %s FROM %s",
@@ -318,8 +359,10 @@ func (m *Model) GetServerQueries(sm *ServerModelSettings) (queries string) {
 			"create": "INSERT INTO %s(%s) VALUES (%s)",
 			"update": "UPDATE %s SET %s WHERE id = ?",
 			"delete": "DELETE %s WHERE id = ?",
+			%s
 		},`, sm.selectList, m.Name, sm.selectList, m.Name, m.Name, sm.insertList, sm.placeholderList,
-		m.Name, sm.updateList, m.Name)
+		m.Name, sm.updateList, m.Name, uniqueQry)
+
 	return
 }
 
@@ -329,16 +372,18 @@ func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode s
 	//modelListFunc
 	indexFunc := fmt.Sprintf(
 		`//function to Get List of model
-		func (c *%s) %s() (%sList []*%s){
+		func (c *%s) %s() (%sList []*%s, err error){
 			rows, err := GetDB().Query(c.Queries["mysql"]["index"])
-			Check(err)
+			if err!=nil{return}
 			defer rows.Close()
 			for rows.Next() {
 				%s := new(%s)
-				Check(rows.Scan(%s))
+				err = rows.Scan(%s)
+				if err!=nil{return}
 				%sList = append(%sList,%s)
 			}
-			Check(rows.Err())
+			err=rows.Err()
+			if err!=nil{return}
 			fmt.Println("%s.%s executed:", %sList)
 			return
 		}`, sm.controllerName, sm.indexFunc, m.Name, sm.modelName,
@@ -348,28 +393,36 @@ func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode s
 	//modelLoadFunc
 	getFunc := fmt.Sprintf(
 		`//function to Get model entity by id
-		func (c *%s) %s(%s uint64) (%s *%s){
+		func (c *%s) %s(%s uint64) (%s *%s, err error){
 			%s = new(%s)
-			Check(GetDB().QueryRow(c.Queries["mysql"]["get"], %s).
-				Scan(%s))
+			err=GetDB().QueryRow(c.Queries["mysql"]["get"], %s).
+				Scan(%s)				
+			if err!=nil{
+				%s = nil
+				if err == sql.ErrNoRows {
+					err = nil
+				} 
+				return
+			}
 			fmt.Println("%s.%s executed", %s)
 			return
 		}`, sm.controllerName, sm.getFunc, sm.idCol, m.Name, sm.modelName, m.Name, sm.modelName,
-		sm.idCol, sm.scanParams, sm.controllerName, sm.getFunc, m.Name)
+		sm.idCol, sm.scanParams, m.Name,
+		sm.controllerName, sm.getFunc, m.Name)
 
 	//modelNewFunc
 	createFunc := fmt.Sprintf(
 		`//function to Create New model entity
-		func (c *%s) %s(%s *%s) (ok bool, modelErrors []string){
+		func (c *%s) %s(%s *%s) (modelErrors []string, err error){
 			fmt.Println("%s.%s executed")
-			ok, modelErrors = %s.Validate()
+			ok, modelErrors := %s.Validate()
 			if !ok{
-				return ok, modelErrors
+				return
 			}			
 			res, err := GetDB().Exec(c.Queries["mysql"]["create"], %s)
-			Check(err)
+			if err!=nil{return}
 			lastId, err := res.LastInsertId()
-			Check(err)
+			if err!=nil{return}
 			fmt.Println("Created with new Id:", lastId)
 			return
 		}`, sm.controllerName, sm.createFunc, m.Name, sm.modelName, sm.controllerName, sm.createFunc, m.Name, sm.updateParams)
@@ -377,14 +430,14 @@ func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode s
 	//modelSaveFunc
 	updateFunc := fmt.Sprintf(
 		`//function to save model entity
-		func (c *%s) %s(%s *%s) (ok bool, modelErrors []string){
+		func (c *%s) %s(%s *%s) (modelErrors []string, err error){
 			fmt.Println("%s.%s executed")
-			ok, modelErrors = %s.Validate()
+			ok, modelErrors := %s.Validate()
 			if !ok{
-				return ok, modelErrors
+				return
 			}			
-			_, err := GetDB().Exec(c.Queries["mysql"]["update"], %s, %s.Id)
-			Check(err)
+			_, err = GetDB().Exec(c.Queries["mysql"]["update"], %s, %s.Id)
+			if err!=nil{return}
 			return
 		}`, sm.controllerName, sm.updateFunc, m.Name, sm.modelName, sm.controllerName, sm.updateFunc, m.Name, sm.updateParams, m.Name)
 
@@ -393,7 +446,7 @@ func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode s
 		`//function to delete model entity by id
 		func (c *%s) %s(%s uint64) (ok bool, err error){
 			_, err = GetDB().Exec(c.Queries["mysql"]["delete"], %s)
-			Check(err)
+			if err!=nil{return}
 			fmt.Println("%s.%s executed")						
 			return true, nil
 		}`, sm.controllerName, sm.deleteFunc, sm.idCol, sm.idCol, sm.controllerName, sm.deleteFunc)
@@ -403,6 +456,7 @@ func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode s
 	goCode = fmt.Sprintf(`package main
 		
 			import(
+				"database/sql"
 				"encoding/json"
 				"strings"
 				"net/http"
