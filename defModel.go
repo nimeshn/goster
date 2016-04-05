@@ -34,6 +34,15 @@ func (m *Model) AddField(field *Field) {
 	m.Fields = append(m.Fields, field)
 }
 
+func (m *Model) PrependField(field *Field) {
+	fld := m.GetField(field.Name)
+	if fld != nil {
+		errors.New(fmt.Sprintf("Prepend Failed as field %s exists already in the model %s", field.Name, m.Name))
+		return
+	}
+	m.Fields = append([]*Field{field}, m.Fields...)
+}
+
 func (m *Model) ValidateRelations() (valid bool, err error) {
 	if m.HasMany != "" {
 		mod := m.appRef.GetModel(m.HasMany)
@@ -92,7 +101,7 @@ func (m *Model) AutoGenerateFields() {
 	if m.GetField("id") != nil {
 		m.SaveField(id)
 	} else {
-		m.AddField(id)
+		m.PrependField(id)
 	}
 	//add createdAt field
 	createdAt := &Field{
