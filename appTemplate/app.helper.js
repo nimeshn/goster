@@ -33,16 +33,20 @@ function checkPageAccess($location, userObj){
 }
 
 function clearAPIError($scope){
-	$scope.errors = {api401:false, api404:false, api500:false, apiMsg:null};
+	$scope.errors = {api400:false, api401:false, api404:false, api500:false, apiMsg:null};
 }
 
 function handleAPIError($scope, response){
-	$scope.errors = {api401:false, api404:false, api500:false, apiMsg:null};
-	if (response.status == 404 && response.data.errors){//Validation Error
-		if (response.data.errors != null){
-			$scope.errors.api404 = true;
-			$scope.errors.apiMsg = response.data.errors;
+	$scope.errors = {api400:false, api401:false, api404:false, api500:false, apiMsg:null};
+	if (response.status == 400 && response.data){//Validation Error		
+		if (response.data != null){
+			$scope.errors.api400 = true;
+			$scope.errors.apiMsg = response.data;
 		}
+	}
+	else if (response.status == 404){//Not Found
+		$scope.errors.api404 = true;
+		$scope.errors.apiMsg = "The requested data does not exists.";
 	}
 	else if (response.status == 500){//Internal Server Error
 		$scope.errors.api500 = true;
@@ -65,11 +69,29 @@ function ValidateUrl(url){
 }
 
 function IsAlpha(val){
-	pattern=new RegExp(/^[a-z]+$/i);
+	pattern=new RegExp(/^[a-z ]+$/i);
 	return pattern.test(val);
 }
 
 function IsAlphaNumeric(val){
-	pattern=new RegExp(/^[a-z0-9]+$/i);
+	pattern=new RegExp(/^[a-z0-9 ]+$/i);
 	return pattern.test(val);
+}
+
+//adding a function to Array type to be able to remove a object using its key value
+Array.prototype.removeByKey = function(key, value){
+   var array = $.map(this, function(v,i){
+      return v[key] === value ? null : v;
+   });
+   this.length = 0; //clear original array
+   this.push.apply(this, array); //push all elements except the one we want to delete
+}
+
+function updateJsonFieldValue(jsonObj, keyName, keyVal, modName, modVal) {
+  for (var i=0; i<jsonObj.length; i++) {
+    if (jsonObj[i][keyName] === keyVal) {
+      jsonObj[i][modName] = modVal;
+      return;
+    }
+  }
 }

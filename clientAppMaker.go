@@ -14,7 +14,7 @@ func (a *App) GetClientVarsRoutes(t *ClientAppSettings) (fileName, JSCode string
 	s := a.GetServerSettings()
 	routing := ""
 	for _, mods := range a.Models {
-		routing += mods.GetRoutes(mods.GetClientSettings())
+		routing += mods.GetRoutes(mods.GetClientSettings()) + fmt.Sprintln()
 	}
 
 	JSCode = fmt.Sprintf(

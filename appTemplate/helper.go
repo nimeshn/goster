@@ -20,12 +20,12 @@ func ValidateUrl(email string) bool {
 
 //Checks if text contains Alphabets
 func IsAlpha(val string) bool {
-	Re := regexp.MustCompile(`^[a-zA-Z]+$`)
+	Re := regexp.MustCompile(`^[a-zA-Z ]+$`)
 	return Re.MatchString(val)
 }
 
 //Checks if the text contains Alphabets and Numbers
 func IsAlphaNumeric(val string) bool {
-	Re := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	Re := regexp.MustCompile(`^[a-zA-Z0-9 ]+$`)
 	return Re.MatchString(val)
 }

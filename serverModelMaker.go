@@ -194,7 +194,10 @@ func (m *Model) GetUniqueFieldAction(sm *ServerModelSettings) (get, del string, 
 				if requestURL != "" {
 					%s
 					result, err:=c.%s(%s)
-					SendResult(rw, Response{Data:result}, err)
+					if result==nil && err==nil{
+						rw.WriteHeader(http.StatusNotFound)
+					}
+					SendResult(rw, result, err)
 					return
 				}
 			}`, fld.Name, parse, getFunc, fld.Name) + fmt.Sprintln()
@@ -203,7 +206,7 @@ func (m *Model) GetUniqueFieldAction(sm *ServerModelSettings) (get, del string, 
 				if requestURL != "" {
 					%s
 					result, err:=c.%s(%s)
-					SendResult(rw, Response{Data:result}, err)
+					SendResult(rw, result, err)
 					return
 				}
 			}`, fld.Name, parse, deleteFunc, fld.Name) + fmt.Sprintln()
@@ -299,25 +302,34 @@ func (m *Model) GetServeHTTP(sm *ServerModelSettings) (timePack, uniqueFuncs, se
 					%s
 				case strings.Contains(contentType, "multipart-form-data"):
 				}
+				var dataErrors []string
+				var err error
 				if req.Method == "POST" {
-					result, err:=c.%s(&model)
-					SendResult(rw, Response{Errors:result}, err)
-					return
+					dataErrors, err=c.%s(&model)
 				} else {
-					result, err:=c.%s(&model)
-					SendResult(rw, Response{Errors:result}, err)
-					return
+					dataErrors, err=c.%s(&model)
 				}
+				if dataErrors!=nil{
+					rw.WriteHeader(http.StatusBadRequest)
+				}
+				SendResult(rw, dataErrors, err)
+				return
 			case "GET":
 				if requestField == "" {
 					if requestURL == "" {
 						result, err:=c.%s()
-						SendResult(rw, Response{Data:result}, err)
+						if result==nil && err==nil{
+							rw.WriteHeader(http.StatusNotFound)
+						}
+						SendResult(rw, result, err)
 						return
 					} else{
 						id, _ := strconv.ParseUint(requestURL, 10, 64)
 						result, err:=c.%s(id)
-						SendResult(rw, Response{Data:result}, err)
+						if result==nil && err==nil{
+							rw.WriteHeader(http.StatusNotFound)
+						}
+						SendResult(rw, result, err)
 						return
 					}
 				}
@@ -327,7 +339,7 @@ func (m *Model) GetServeHTTP(sm *ServerModelSettings) (timePack, uniqueFuncs, se
 					if requestURL != "" {
 						id, _ := strconv.ParseUint(requestURL, 10, 64)
 						result, err:=c.%s(id)
-						SendResult(rw, Response{Data:result}, err)
+						SendResult(rw, result, err)
 						return
 					}
 				}
@@ -358,7 +370,7 @@ func (m *Model) GetServerQueries(sm *ServerModelSettings) (queries string) {
 			"get":    "SELECT %s FROM %s WHERE id = ?",
 			"create": "INSERT INTO %s(%s) VALUES (%s)",
 			"update": "UPDATE %s SET %s WHERE id = ?",
-			"delete": "DELETE %s WHERE id = ?",
+			"delete": "DELETE FROM %s WHERE id = ?",
 			%s
 		},`, sm.selectList, m.Name, sm.selectList, m.Name, m.Name, sm.insertList, sm.placeholderList,
 		m.Name, sm.updateList, m.Name, uniqueQry)

@@ -14,7 +14,6 @@ type ClientModelSettings struct {
 	indexData               string
 	indexFunc               string
 	isNewFunc               string
-	newFunc                 string
 	loadFunc                string
 	validateFunc            string
 	saveFunc                string
@@ -42,7 +41,6 @@ func (m *Model) GetClientSettings() *ClientModelSettings {
 		indexData:               fmt.Sprintf("%sList", m.Name),
 		indexFunc:               fmt.Sprintf("Get%sList", strings.Title(m.Name)),
 		isNewFunc:               fmt.Sprintf("IsNew%s", strings.Title(m.Name)),
-		newFunc:                 fmt.Sprintf("New%s", strings.Title(m.Name)),
 		loadFunc:                fmt.Sprintf("Load%s", strings.Title(m.Name)),
 		validateFunc:            fmt.Sprintf("Validate%s", strings.Title(m.Name)),
 		saveFunc:                fmt.Sprintf("Save%s", strings.Title(m.Name)),
@@ -59,7 +57,7 @@ func (m *Model) GetClientSettings() *ClientModelSettings {
 		editRoute:               fmt.Sprintf("/%s/edit/", m.Name),
 		showRoute:               fmt.Sprintf("/%s/view/", m.Name),
 		saveRoute:               fmt.Sprintf("/%s", m.Name),
-		deleteRoute:             fmt.Sprintf("/%s/delete", m.Name),
+		deleteRoute:             fmt.Sprintf("/%s/", m.Name),
 	}
 }
 
@@ -121,10 +119,10 @@ func (m *Model) GetClientEditView(a *ClientModelSettings) (fileName, htmlCode st
 				inputHtml += ` pattern="https?://.+"`
 			}
 			if fld.Validator.IsAlpha {
-				inputHtml += ` pattern="^[A-Za-z]+$"`
+				inputHtml += ` pattern="^[A-Za-z ]+$"`
 			}
 			if fld.Validator.IsAlphaNumeric {
-				inputHtml += ` pattern="^[A-Za-z0-9]+$"`
+				inputHtml += ` pattern="^[A-Za-z0-9 ]+$"`
 			}
 			if fld.Validator.Required {
 				inputHtml += ` required`
@@ -190,11 +188,11 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 		a.indexFunc, a.newRoute, m.DisplayName)
 
 	htmlCode += fmt.Sprintf(`<div ng-if="%s.length==0" class="row"><div class="col-sm-12 text-center"><h3>0 Records Found.</h3></div></div>`,
-		a.formData)
+		a.indexData)
 
-	htmlCode += fmt.Sprintf(`<div ng-if="%s.length>0" class="row"><div class="col-sm-12">`, a.formData)
+	htmlCode += fmt.Sprintf(`<div ng-if="%s.length>0" class="row"><div class="col-sm-12">`, a.indexData)
 	if m.ViewType == List {
-		htmlCode += fmt.Sprintf(`<div class="row" ng-repeat="x in %s | orderBy:createdOn:reverse">`, a.formData)
+		htmlCode += fmt.Sprintf(`<div class="row" ng-repeat="x in %s | orderBy:modifiedAt:reverse">`, a.indexData)
 		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="#%s{{x.id}}" alt="View %s" title="View %s">`+
 			`<span class="glyphicon glyphicon-folder-open"></span></a></div>`,
 			a.showRoute, m.DisplayName, m.DisplayName)
@@ -206,8 +204,8 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 			m.DisplayName, m.DisplayName, a.deleteFunc)
 		for _, fld := range m.Fields {
 			if !fld.HideInIndex {
-				htmlCode += fmt.Sprintf(`<div class="col-sm-1"><span ng-bind="%s.%s"></span></div>`,
-					a.formData, fld.Name)
+				htmlCode += fmt.Sprintf(`<div class="col-sm-1"><span ng-bind="x.%s"></span></div>`,
+					fld.Name)
 			}
 		}
 		htmlCode += `</div>`
@@ -230,23 +228,6 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 			return (!$scope.%s || $scope.%s == "" || $scope.%s == null);
 		};`, a.isNewFunc, a.idCol, a.idCol, a.idCol)
 
-	//modelNewFunc
-	newFunc := fmt.Sprintf(
-		`//function to Get New model entity
-		$scope.%s =function(){
-		$http.get(apiPath + "%s")
-			.then(function(response) {
-				if (response.status == 200){
-					$scope.%s = response.data.%s;
-					clearAPIError($scope);
-				}
-			},
-			function(response) {
-				handleAPIError($scope, response);
-			}
-		);
-	};`, a.newFunc, a.newRoute, a.formData, m.Name)
-
 	//modelLoadFunc
 	loadFunc := fmt.Sprintf(
 		`//function to load model entity
@@ -254,7 +235,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		$http.get(apiPath + "/%s/" + $scope.%s)
 			.then(function(response) {
 				if (response.status == 200){
-					$scope.%s = response.data.%s;
+					$scope.%s = response.data;
 					clearAPIError($scope);
 				}
 			},
@@ -262,7 +243,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 				handleAPIError($scope, response);
 			}
 		);
-	};`, a.loadFunc, m.Name, a.idCol, a.formData, m.Name)
+	};`, a.loadFunc, m.Name, a.idCol, a.formData)
 
 	validateFunc := ""
 	for _, fld := range m.Fields {
@@ -293,7 +274,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 				function(response) {
 					if (response.status == 200){
 						clearAPIError($scope);
-						$location.path("#%s");
+						$location.path("%s");
 					} 
 					else {
 					  $scope.message = data.message;
@@ -304,7 +285,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 			  });
 		};`, a.saveFunc, a.validateFunc, a.isNewFunc, a.saveRoute, a.formData, a.indexRoute)
 
-	JSCode = isNewFunc + fmt.Sprintln() + newFunc + fmt.Sprintln() + loadFunc +
+	JSCode = isNewFunc + fmt.Sprintln() + loadFunc +
 		fmt.Sprintln() + validateFunc + fmt.Sprintln() + saveFunc
 
 	JSCode = fmt.Sprintf(`app.controller('%s', 
@@ -314,12 +295,10 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		//check if the user has access to this page	
 		checkPageAccess($location, appVars.user);	
 		$scope.%s = $routeParams.%s;
-		if ($scope.%s()){//New 
-			$scope.%s();
-		}else{
+		if (!$scope.%s()){//New 
 			$scope.%s();
 		}
-	}]);`, a.controllerName, JSCode, a.idCol, a.idCol, a.isNewFunc, a.newFunc, a.loadFunc)
+	}]);`, a.controllerName, JSCode, a.idCol, a.idCol, a.isNewFunc, a.loadFunc)
 
 	return
 }
@@ -330,7 +309,7 @@ func (m *Model) GetClientIndexController(a *ClientModelSettings) (fileName, JSCo
 	//modelIndexFunc
 	listFunc := fmt.Sprintf(
 		`$scope.%s = function(){
-			$http.get(apiPath + "%s")
+			$http.get(apiPath + "/%s")
 				.then(function(response) {
 					if (response.status == 200){
 						$scope.%s = response.data;
@@ -341,11 +320,11 @@ func (m *Model) GetClientIndexController(a *ClientModelSettings) (fileName, JSCo
 					handleAPIError($scope, response);
 				}
 			);
-		};`, a.indexFunc, a.indexRoute, a.indexData)
+		};`, a.indexFunc, m.Name, a.indexData)
 
 	//modelDeleteFunc
 	deleteFunc := fmt.Sprintf(`$scope.%s = function(%s){
-			$http.put(apiPath + "%s", {id: %s})
+			$http.delete(apiPath + "%s" + %s)
 					.then(function(response) {
 						if (response.status == 200){
 							$scope.%s.removeByKey("id", %s);
