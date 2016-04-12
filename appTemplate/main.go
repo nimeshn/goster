@@ -6,6 +6,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"net/http"
+	"os/exec"
+	"runtime"
 )
 
 var (
@@ -23,10 +25,37 @@ func GetDB() *sql.DB {
 	return AppDB
 }
 
+func OpenURL(url string) {
+	var err error
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows", "darwin":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+var (
+	portNo                     int
+	dbUser, dbPassword, dbName string
+	serverUrl                  string
+)
+
 func main() {
+	portNo = 8000
+	dbUser = "root"
+	dbPassword = "shsemin123"
+	dbName = "sampleapp"
+	serverUrl = fmt.Sprintf("http://127.0.0.1:%d", portNo)
+	//Connect to the Database
 	var err error
 	AppDB, err = sql.Open("mysql",
-		"root:shsemin123@tcp(127.0.0.1:3306)/sampleapp?parseTime=true")
+		fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?parseTime=true", dbUser, dbPassword, dbName))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -40,6 +69,7 @@ func main() {
 	MakeActionRoutes()
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("client"))))
 	//
-	fmt.Println("Goster is running on http://127.0.0.1:8000")
+	fmt.Printf("Goster is starting on %s...", serverUrl)
+	OpenURL(serverUrl)
 	http.ListenAndServe(":8000", nil)
 }

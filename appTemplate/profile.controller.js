@@ -20,7 +20,7 @@ app.controller('profileController',
 				handleAPIError($scope, response);
 			}
 		);
-	}	
+	};	
 	//
 	$scope.saveProfile =function(){
 		$http.put(apiPath + "/user", profileData).

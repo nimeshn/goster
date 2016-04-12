@@ -25,13 +25,13 @@ func (t Types) String() string { return typesDef[t] }
 type IndexView int
 
 const (
-	List IndexView = iota
-	Table
+	Table IndexView = iota
+	List
 )
 
 var indexViewDef = [...]string{
-	"List",
 	"Table",
+	"List",
 }
 
 // String returns the desc of the Type

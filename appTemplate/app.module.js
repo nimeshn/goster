@@ -27,7 +27,7 @@ app.controller('appController',
 		$scope.IsLoggedIn = function(){
 			return true;//remove this later nimesh
 			return !(appVars.user.memberId == null || appVars.user.memberId == "");
-		}
+		};
 		//Initialize the facebook object after its SDK js file is loaded
 		window.fbAsyncInit = function() {
 			FB.init({
@@ -42,6 +42,7 @@ app.controller('appController',
 				appVars.fbSDKLoadedHndlr();
 			}
 		};
+
 		if (!appVars.fbSDKLoaded){
 			// Load the SDK asynchronously
 			(function(d, s, id) {
@@ -62,7 +63,7 @@ app.controller('appController',
 				$http.defaults.headers.patch['AccToken'] = '';
 				$location.path("/login");
 			}
-		}
+		};
 		//
 		$scope.logout = function(){
 			$scope.socialLoggedout = false;
@@ -95,6 +96,6 @@ app.controller('appController',
 					$scope.logoutCleanup();
 				});
 			}
-		}
+		};
 	}
 ]);

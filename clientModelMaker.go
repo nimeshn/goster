@@ -202,14 +202,44 @@ func (m *Model) GetClientIndexView(a *ClientModelSettings) (fileName, htmlCode s
 		htmlCode += fmt.Sprintf(`<div class="col-sm-1"><a href="" alt="Delete %s" title="Delete %s"><span class="glyphicon glyphicon-remove" `+
 			`ng-click="%s(x.id);"></span></a></div>`,
 			m.DisplayName, m.DisplayName, a.deleteFunc)
+
+		var colSize int = (9 / m.GetIndexFieldsCount())
 		for _, fld := range m.Fields {
 			if !fld.HideInIndex {
-				htmlCode += fmt.Sprintf(`<div class="col-sm-1"><span ng-bind="x.%s"></span></div>`,
-					fld.Name)
+				htmlCode += fmt.Sprintf(`<div class="col-sm-%d"><span ng-bind="x.%s"></span></div>`,
+					colSize, fld.Name)
 			}
 		}
 		htmlCode += `</div>`
 	} else if m.ViewType == Table {
+		tableHead, tableRows := "", ""
+		for _, fld := range m.Fields {
+			if !fld.HideInIndex {
+				tableHead += fmt.Sprintln() + fmt.Sprintf(`<th role="button">%s</th>`, fld.DisplayName)
+				tableRows += fmt.Sprintln() + fmt.Sprintf(`<td><span ng-bind="x.%s"></span></td>`, fld.Name)
+			}
+		}
+		tableHead = `<th role="button" class="text-center">View</th>
+			<th role="button" class="text-center">Edit</th>
+			<th role="button" class="text-center">Delete</th>` + tableHead
+		tableRows = fmt.Sprintf(`<td class="text-center"><a href="#%s{{x.id}}" alt="View %s" title="View %s">`+
+			`<span class="glyphicon glyphicon-folder-open"></span></a></td>`,
+			a.showRoute, m.DisplayName, m.DisplayName) + fmt.Sprintln() +
+			fmt.Sprintf(`<td class="text-center"><a href="#%s{{x.id}}" alt="Edit %s" title="Edit %s">`+
+				`<span class="glyphicon glyphicon-edit"></span></a></td>`,
+				a.editRoute, m.DisplayName, m.DisplayName) + fmt.Sprintln() +
+			fmt.Sprintf(`<td class="text-center"><a href="" alt="Delete %s" title="Delete %s"><span class="glyphicon glyphicon-remove" `+
+				`ng-click="%s(x.id);"></span></a></td>`,
+				m.DisplayName, m.DisplayName, a.deleteFunc) + fmt.Sprintln() + tableRows
+
+		htmlCode += fmt.Sprintf(`<table class="table table-striped table-hover table-condensed table-bordered"><thead><tr>
+			%s 
+			</tr>
+			</thead>
+			<tbody>
+			<tr ng-repeat="x in %s | orderBy:modifiedAt:reverse">%s</tr>
+			</tbody>
+			</table>`, tableHead, a.indexData, tableRows)
 
 	}
 	htmlCode += `</div></div>`

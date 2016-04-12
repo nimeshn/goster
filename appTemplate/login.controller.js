@@ -10,9 +10,10 @@ app.controller('loginController',
 				appVars.user.fbToken = response.authResponse.accessToken;
 				$scope.SignIn();
 			} else if (response.status === 'not_authorized') {
+				//
 			} else {
 			}
-		};
+	};
 	//
 	$scope.fbSDKLoadedHndlr = function(){
 		FB.Event.subscribe('auth.authResponseChange', function(response) {
@@ -25,10 +26,10 @@ app.controller('loginController',
 	};
 	if (appVars.fbSDKLoaded){
 		$scope.fbSDKLoadedHndlr();
-	}
-	else{
+	} else {
 		appVars.fbSDKLoadedHndlr = $scope.fbSDKLoadedHndlr;
 	}
+
 	$scope.openGPLoginDialog = function(){
 		if (IsGapiLoaded()){
 			var GoogleAuth  = gapi.auth2.getAuthInstance();
@@ -44,6 +45,7 @@ app.controller('loginController',
 			logConsole('Gapi not loaded yet.');
 		}
 	};
+	//
 	$scope.SignIn = function(){
 		$http.post(apiPath + "/signin", {fbToken: appVars.user.fbToken, gpToken: appVars.user.gpToken})
 		.then(function(response) {

@@ -88,6 +88,15 @@ func (m *Model) SaveField(field *Field) {
 	}
 }
 
+func (m *Model) GetIndexFieldsCount() (count int) {
+	for _, fld := range m.Fields {
+		if !fld.HideInIndex {
+			count++
+		}
+	}
+	return
+}
+
 func (m *Model) AutoGenerateFields() {
 	//add id field
 	id := &Field{
