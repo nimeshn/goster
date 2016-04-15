@@ -18,6 +18,7 @@ Goster also has capabilities to add social login capabilities to your project. C
 <ol>
 <li>Get <b>Html prettifier</b> written in golang from https://github.com/yosssi/gohtml.git using the following command
 <b>go get github.com/yosssi/gohtml</b></li>
-<li>Get "JSBeautifier-go" from https://github.com/ditashi/jsbeautifier-go using the following command
+<li>Get <b>JSBeautifier-go</b> from https://github.com/ditashi/jsbeautifier-go using the following command
 <b>go get github.com/ditashi/jsbeautifier-go</b></li>
+<li>oauth2 package contains a client implementation for OAuth 2.0 spec, would be used for Google Plus signin <b>go get golang.org/x/oauth2</b> && <b>go get golang.org/x/oauth2/google</b></li>
 </ol>

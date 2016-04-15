@@ -21,9 +21,8 @@ func main() {
 				DisplayName: "Title",
 				Type:        String,
 				Validator: &FieldValidation{
-					Required:       true,
-					IsAlphaNumeric: true,
-					MaxLen:         50,
+					Required: true,
+					MaxLen:   50,
 				},
 			},
 			&Field{
@@ -31,9 +30,18 @@ func main() {
 				DisplayName: "Message",
 				Type:        String,
 				Validator: &FieldValidation{
-					Required:       true,
-					IsAlphaNumeric: true,
-					MaxLen:         200,
+					Required: true,
+					MaxLen:   200,
+				},
+			},
+			&Field{
+				Name:        "location",
+				DisplayName: "Location",
+				Type:        String,
+				Validator: &FieldValidation{
+					Required: true,
+					MaxLen:   255,
+					MinLen:   5,
 				},
 			},
 		},

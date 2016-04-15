@@ -293,7 +293,7 @@ func (m *Model) GetClientController(a *ClientModelSettings) (fileName, JSCode st
 		`//function to save model entity
 		$scope.%s =function(){
 			if (!$scope.%s()){
-				handleAPIError($scope, {status:404,data:{errors:$scope.errors}});
+				handleAPIError($scope, {status:400,data:{errors:$scope.errors}});
 				return
 			}
 			$http({

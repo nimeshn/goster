@@ -70,21 +70,22 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 	}
 	SaveAppSettings(app)
 	fileMap := map[string]string{
-		clientSettings.helperJSFileName:      clientSettings.directories["app"],
-		clientSettings.moduleJSFileName:      clientSettings.directories["app"],
-		clientSettings.logoFile:              clientSettings.directories["images"],
-		clientSettings.bootstrapSocialFile:   clientSettings.directories["css"],
-		clientSettings.baseTemplateName:      clientSettings.directories["layout templates"],
-		clientSettings.indexTemplateName:     clientSettings.directories["include templates"],
-		clientSettings.errorHandler:          clientSettings.directories["errorHandler"],
-		clientSettings.homeHTMLFile:          clientSettings.directories["home"],
-		clientSettings.homeControllerFile:    clientSettings.directories["home"],
-		clientSettings.loginHTMLFile:         clientSettings.directories["login"],
-		clientSettings.loginControllerFile:   clientSettings.directories["login"],
-		clientSettings.profileHTMLFile:       clientSettings.directories["profile"],
-		clientSettings.profileControllerFile: clientSettings.directories["profile"],
-		serverSettings.mainGoFileName:        serverSettings.directories["server"],
-		serverSettings.helperGoFileName:      serverSettings.directories["server"],
+		clientSettings.helperJSFileName:        clientSettings.directories["app"],
+		clientSettings.moduleJSFileName:        clientSettings.directories["app"],
+		clientSettings.logoFile:                clientSettings.directories["images"],
+		clientSettings.bootstrapSocialFile:     clientSettings.directories["css"],
+		clientSettings.baseTemplateName:        clientSettings.directories["layout templates"],
+		clientSettings.indexTemplateName:       clientSettings.directories["include templates"],
+		clientSettings.errorHandler:            clientSettings.directories["errorHandler"],
+		clientSettings.homeHTMLFile:            clientSettings.directories["home"],
+		clientSettings.homeControllerFile:      clientSettings.directories["home"],
+		clientSettings.loginHTMLFile:           clientSettings.directories["login"],
+		clientSettings.loginControllerFile:     clientSettings.directories["login"],
+		clientSettings.profileHTMLFile:         clientSettings.directories["profile"],
+		clientSettings.profileControllerFile:   clientSettings.directories["profile"],
+		serverSettings.mainGoFileName:          serverSettings.directories["server"],
+		serverSettings.helperGoFileName:        serverSettings.directories["server"],
+		serverSettings.loginControllerFileName: serverSettings.directories["server"],
 	}
 	for filename, dir := range fileMap {
 		//copy app helper js file

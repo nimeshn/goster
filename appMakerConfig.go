@@ -71,21 +71,23 @@ func (a *App) GetClientSettings() *ClientAppSettings {
 }
 
 type ServerAppSettings struct {
-	helperGoFileName     string
-	mainGoFileName       string
-	actionRoutesFileName string
-	goBeautifierCmd      string
-	apiPath              string
-	directories          map[string]string
+	helperGoFileName        string
+	mainGoFileName          string
+	actionRoutesFileName    string
+	goBeautifierCmd         string
+	loginControllerFileName string
+	apiPath                 string
+	directories             map[string]string
 }
 
 func (a *App) GetServerSettings() *ServerAppSettings {
 	return &ServerAppSettings{
-		helperGoFileName:     "helper.go",
-		mainGoFileName:       "main.go",
-		actionRoutesFileName: "actionRoutes.go",
-		goBeautifierCmd:      "gofmt",
-		apiPath:              "/api",
+		helperGoFileName:        "helper.go",
+		mainGoFileName:          "main.go",
+		actionRoutesFileName:    "actionRoutes.go",
+		loginControllerFileName: "loginController.go",
+		goBeautifierCmd:         "gofmt",
+		apiPath:                 "/api",
 		directories: map[string]string{
 			"server": a.AppDir,
 		},

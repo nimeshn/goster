@@ -426,7 +426,6 @@ func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode s
 	createFunc := fmt.Sprintf(
 		`//function to Create New model entity
 		func (c *%s) %s(%s *%s) (modelErrors []string, err error){
-			fmt.Println("%s.%s executed")
 			ok, modelErrors := %s.Validate()
 			if !ok{
 				return
@@ -435,23 +434,24 @@ func (m *Model) GetServerController(sm *ServerModelSettings) (fileName, goCode s
 			if err!=nil{return}
 			lastId, err := res.LastInsertId()
 			if err!=nil{return}
+			fmt.Println("%s.%s executed")
 			fmt.Println("Created with new Id:", lastId)
 			return
-		}`, sm.controllerName, sm.createFunc, m.Name, sm.modelName, sm.controllerName, sm.createFunc, m.Name, sm.updateParams)
+		}`, sm.controllerName, sm.createFunc, m.Name, sm.modelName, m.Name, sm.updateParams, sm.controllerName, sm.createFunc)
 
 	//modelSaveFunc
 	updateFunc := fmt.Sprintf(
 		`//function to save model entity
 		func (c *%s) %s(%s *%s) (modelErrors []string, err error){
-			fmt.Println("%s.%s executed")
 			ok, modelErrors := %s.Validate()
 			if !ok{
 				return
 			}			
 			_, err = GetDB().Exec(c.Queries["mysql"]["update"], %s, %s.Id)
 			if err!=nil{return}
+			fmt.Println("%s.%s executed")
 			return
-		}`, sm.controllerName, sm.updateFunc, m.Name, sm.modelName, sm.controllerName, sm.updateFunc, m.Name, sm.updateParams, m.Name)
+		}`, sm.controllerName, sm.updateFunc, m.Name, sm.modelName, m.Name, sm.updateParams, m.Name, sm.controllerName, sm.updateFunc)
 
 	//modelDeleteFunc
 	deleteFunc := fmt.Sprintf(
