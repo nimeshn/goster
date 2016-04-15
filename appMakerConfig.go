@@ -97,7 +97,7 @@ func (a *App) GetServerSettings() *ServerAppSettings {
 		apiPath:                 "/api",
 		directories: map[string]string{
 			"server": a.AppDir,
-			"db":     "database",
+			"db":     path.Join(a.AppDir, "database"),
 		},
 	}
 }

@@ -57,6 +57,8 @@ func (app *App) MakeServer() {
 	fileName, content := app.GetServerRoutes(t)
 	CreateFile(fileName, content)
 	//
+	GenerateDBSQL(mySQLDBGenerator, app)
+	//
 	for _, mods := range app.Models {
 		if mods.DisplayName == "" {
 			mods.DisplayName = mods.Name
