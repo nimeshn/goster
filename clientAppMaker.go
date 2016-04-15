@@ -121,7 +121,6 @@ func (app *App) MakeClient() {
 		fileName, content = mods.GetClientIndexView(a)
 		CreateFile(fileName, content)
 	}
-	SaveAppSettings(app)
 	//
 	filepath.Walk(app.AppDir, app.fileClientWalker)
 }

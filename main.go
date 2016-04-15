@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"path"
 )
 
 func rootHandler(rw http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(rw, "Hello Goster!")
-
 }
 
 func main() {
@@ -49,14 +46,13 @@ func main() {
 		},
 	}
 
-	workDir, err := os.Getwd()
-	Check(err)
-	app := CreateNewApp("SampleApp", "Sample Application", "Bitwinger", "V1.0",
-		path.Join(path.Dir(workDir), "SampleApp"))
+	app := CreateNewApp("SampleApp", "Sample Application", "Bitwinger", "V1.0", 80)
+	fmt.Println(app.AppDir)
 	app.AddModel(&model)
+	SaveAppSettings(app)
 	app.MakeClient()
-
 	app.MakeServer()
+	app.InstallAndRunApp()
 
 	json.Marshal(app)
 	//vals, _ := json.Marshal(app)

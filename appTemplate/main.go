@@ -10,15 +10,6 @@ import (
 	"runtime"
 )
 
-var (
-	AppDB      *sql.DB
-	serverUrl  string = "http://127.0.0.1:%d"
-	portNo     int    = 8000
-	dbUser     string = "root"
-	dbPassword string = "shsemin123"
-	dbName     string = "sampleapp"
-)
-
 func Check(err error) {
 	if err != nil {
 		fmt.Println(err)

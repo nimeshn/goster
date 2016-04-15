@@ -81,6 +81,7 @@ type ServerAppSettings struct {
 	dbName                  string
 	dbUser                  string
 	dbUserPassword          string
+	serverVarFileName       string
 	directories             map[string]string
 }
 
@@ -90,9 +91,10 @@ func (a *App) GetServerSettings() *ServerAppSettings {
 		mainGoFileName:          "main.go",
 		actionRoutesFileName:    "actionRoutes.go",
 		loginControllerFileName: "loginController.go",
-		dbName:                  a.Name,
-		dbUser:                  fmt.Sprintf("%s_user", a.Name),
-		dbUserPassword:          fmt.Sprintf("%s_pwd", a.Name),
+		serverVarFileName:       "serverVars.go",
+		dbName:                  CamelCase(a.Name),
+		dbUser:                  fmt.Sprintf("%s_user", CamelCase(a.Name)),
+		dbUserPassword:          fmt.Sprintf("%s_pwd", CamelCase(a.Name)),
 		goBeautifierCmd:         "gofmt",
 		apiPath:                 "/api",
 		directories: map[string]string{

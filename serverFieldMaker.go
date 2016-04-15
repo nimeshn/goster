@@ -60,10 +60,17 @@ func (fld *Field) GetServerValidation(a *ServerModelSettings) (goCode string) {
 			}`, fieldName, fieldName, fld.DisplayName)
 	}
 	if fld.Validator.Required {
-		goCode += fmt.Sprintln() + fmt.Sprintf(
-			`if %s==""{
+		if fld.Type == Date {
+			goCode += fmt.Sprintln() + fmt.Sprintf(
+				`if %s.IsZero() {
 				modelErrors = append(modelErrors, "%s is required.")
 			}`, fieldName, fld.DisplayName)
+		} else if fld.Type == String {
+			goCode += fmt.Sprintln() + fmt.Sprintf(
+				`if %s==""{
+				modelErrors = append(modelErrors, "%s is required.")
+			}`, fieldName, fld.DisplayName)
+		}
 	}
 	return
 }

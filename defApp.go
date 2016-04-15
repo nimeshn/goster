@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os/exec"
+	"path/filepath"
 )
 
 type App struct {
@@ -12,6 +14,7 @@ type App struct {
 	VersionNo   string   `json:"versionNo"`
 	AppDir      string   `json:"appDir"`
 	Models      []*Model `json:"models"`
+	PortNumber  int      `json:"portNumber"`
 }
 
 func (a *App) AddModel(model *Model) {
@@ -50,4 +53,11 @@ func (a *App) SaveModel(model *Model) {
 			return
 		}
 	}
+}
+
+func (app *App) InstallAndRunApp() {
+	fmt.Println("Building and Running the App:", app.Name)
+	cmd := exec.Command("go", "install", "&&", filepath.Base(app.AppDir))
+	cmd.Dir = filepath.Dir(app.AppDir)
+	Check(cmd.Run())
 }

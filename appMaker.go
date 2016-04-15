@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/yosssi/gohtml"
@@ -8,12 +9,29 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 var (
 	dirPerm, filePerm os.FileMode = 0755, 0644
 	app               *App
+	camelingRegex     = regexp.MustCompile("[0-9A-Za-z]+")
 )
+
+func CamelCase(src string) string {
+	byteSrc := []byte(src)
+	chunks := camelingRegex.FindAll(byteSrc, -1)
+	for idx, val := range chunks {
+		if idx > 0 {
+			chunks[idx] = bytes.Title(val)
+		} else {
+			valStr := string(val)
+			chunks[idx] = []byte(strings.ToLower(valStr[:1]) + string(valStr[1:]))
+		}
+	}
+	return string(bytes.Join(chunks, nil))
+}
 
 func GetApp() *App {
 	return app
@@ -30,7 +48,7 @@ func CopyFile(srcPath, destPath string) {
 	buffStr, err := ioutil.ReadFile(srcPath)
 	Check(err)
 	Check(ioutil.WriteFile(destPath, buffStr, filePerm))
-	fmt.Println("Created", destPath)
+	fmt.Println("Copied", destPath)
 }
 
 func FormatHTMLFile(srcPath string) {
@@ -54,24 +72,27 @@ func SaveAppSettings(app *App) {
 	Check(ioutil.WriteFile(path.Join(app.AppDir, settings["configFile"]), []byte(appJson), 0644))
 }
 
-func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app *App) {
+func CreateNewApp(name, displayName, companyName, versionNo string, portNumber int) (app *App) {
+	workDir, err := os.Getwd()
+	Check(err)
+	fmt.Println("CamelCasing Appname:", CamelCase(name))
 	app = &App{
 		Name:        name,
 		DisplayName: displayName,
 		CompanyName: companyName,
 		VersionNo:   versionNo,
-		AppDir:      appDir,
+		AppDir:      path.Join(path.Dir(workDir), CamelCase(name)),
 		Models:      []*Model{},
+		PortNumber:  portNumber,
 	}
 	clientSettings := app.GetClientSettings()
 	serverSettings := app.GetServerSettings()
 	//create app directories
 	fmt.Println("Creating App directories for", app.Name)
-	for name, dir := range clientSettings.directories {
+	for _, dir := range clientSettings.directories {
 		Check(os.MkdirAll(dir, dirPerm))
-		fmt.Println(name, "folder:", dir)
+		fmt.Println("Created", dir)
 	}
-	SaveAppSettings(app)
 	fileMap := map[string]string{
 		clientSettings.helperJSFileName:        clientSettings.directories["app"],
 		clientSettings.moduleJSFileName:        clientSettings.directories["app"],

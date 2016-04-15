@@ -51,10 +51,34 @@ func (a *App) GetServerRoutes(t *ServerAppSettings) (fileName, GoCode string) {
 	return
 }
 
+func (app *App) GetServerVars(t *ServerAppSettings) (fileName, content string) {
+	fileName = path.Join(t.directories["server"], t.serverVarFileName)
+
+	content = fmt.Sprintf(
+		`package main
+
+		import (
+			"database/sql"
+		)
+
+		var (
+			AppDB      *sql.DB
+			serverUrl  string = "http://localhost:%d/"
+			portNo     int    = %d
+			dbUser     string = "%s"
+			dbPassword string = "%s"
+			dbName     string = "%s"
+		)`, app.PortNumber, app.PortNumber, t.dbUser, t.dbUserPassword, t.dbName)
+	return
+}
+
 func (app *App) MakeServer() {
 	t := app.GetServerSettings()
 	//create actionRoutes.go
 	fileName, content := app.GetServerRoutes(t)
+	CreateFile(fileName, content)
+	//create serverVars.go
+	fileName, content = app.GetServerVars(t)
 	CreateFile(fileName, content)
 	//
 	GenerateDBSQL(mySQLDBGenerator, app)
@@ -78,7 +102,6 @@ func (app *App) MakeServer() {
 		fileName, content = mods.GetServerController(a)
 		CreateFile(fileName, content)
 	}
-	//SaveAppSettings(app)
 	//
 	filepath.Walk(app.AppDir, app.fileServerWalker)
 }
