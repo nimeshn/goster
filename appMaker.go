@@ -10,9 +10,12 @@ import (
 	"path/filepath"
 )
 
-var app *App
+var (
+	dirPerm, filePerm os.FileMode = 0755, 0644
+	app               *App
+)
 
-func GetApp2() *App {
+func GetApp() *App {
 	return app
 }
 
@@ -26,20 +29,20 @@ func Check(err error) {
 func CopyFile(srcPath, destPath string) {
 	buffStr, err := ioutil.ReadFile(srcPath)
 	Check(err)
-	Check(ioutil.WriteFile(destPath, buffStr, 0644))
+	Check(ioutil.WriteFile(destPath, buffStr, filePerm))
 	fmt.Println("Created", destPath)
 }
 
 func FormatHTMLFile(srcPath string) {
 	buffStr, err := ioutil.ReadFile(srcPath)
 	Check(err)
-	Check(ioutil.WriteFile(srcPath, []byte(gohtml.Format(string(buffStr))), 0644))
+	Check(ioutil.WriteFile(srcPath, []byte(gohtml.Format(string(buffStr))), filePerm))
 	fmt.Println("Formatted", srcPath)
 }
 
 func CreateFile(fileName, content string) {
-	Check(os.MkdirAll(filepath.Dir(fileName), os.ModeDir))
-	Check(ioutil.WriteFile(fileName, []byte(content), 0644))
+	Check(os.MkdirAll(filepath.Dir(fileName), dirPerm))
+	Check(ioutil.WriteFile(fileName, []byte(content), filePerm))
 	fmt.Println("Created", fileName)
 }
 
@@ -65,7 +68,7 @@ func CreateNewApp(name, displayName, companyName, versionNo, appDir string) (app
 	//create app directories
 	fmt.Println("Creating App directories for", app.Name)
 	for name, dir := range clientSettings.directories {
-		Check(os.MkdirAll(dir, os.ModeDir))
+		Check(os.MkdirAll(dir, dirPerm))
 		fmt.Println(name, "folder:", dir)
 	}
 	SaveAppSettings(app)

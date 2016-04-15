@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path"
 )
 
 func rootHandler(rw http.ResponseWriter, req *http.Request) {
@@ -47,7 +49,10 @@ func main() {
 		},
 	}
 
-	app := CreateNewApp("SampleApp", "Sample Application", "Bitwinger", "V1.0", "c:/gopath/src/github.com/nimeshn/SampleApp")
+	workDir, err := os.Getwd()
+	Check(err)
+	app := CreateNewApp("SampleApp", "Sample Application", "Bitwinger", "V1.0",
+		path.Join(path.Dir(workDir), "SampleApp"))
 	app.AddModel(&model)
 	app.MakeClient()
 

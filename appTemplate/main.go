@@ -11,7 +11,12 @@ import (
 )
 
 var (
-	AppDB *sql.DB
+	AppDB      *sql.DB
+	serverUrl  string = "http://127.0.0.1:%d"
+	portNo     int    = 8000
+	dbUser     string = "root"
+	dbPassword string = "shsemin123"
+	dbName     string = "sampleapp"
 )
 
 func Check(err error) {
@@ -40,18 +45,8 @@ func OpenURL(url string) {
 	}
 }
 
-var (
-	portNo                     int
-	dbUser, dbPassword, dbName string
-	serverUrl                  string
-)
-
 func main() {
-	portNo = 8000
-	dbUser = "root"
-	dbPassword = "shsemin123"
-	dbName = "sampleapp"
-	serverUrl = fmt.Sprintf("http://127.0.0.1:%d", portNo)
+	serverUrl = fmt.Sprintf(serverUrl, portNo)
 	//Connect to the Database
 	var err error
 	AppDB, err = sql.Open("mysql",
@@ -71,5 +66,5 @@ func main() {
 	//
 	fmt.Printf("Goster is starting on %s...", serverUrl)
 	OpenURL(serverUrl)
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", portNo), nil)
 }

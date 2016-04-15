@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"path"
 )
 
@@ -77,6 +78,9 @@ type ServerAppSettings struct {
 	goBeautifierCmd         string
 	loginControllerFileName string
 	apiPath                 string
+	dbName                  string
+	dbUser                  string
+	dbUserPassword          string
 	directories             map[string]string
 }
 
@@ -86,10 +90,14 @@ func (a *App) GetServerSettings() *ServerAppSettings {
 		mainGoFileName:          "main.go",
 		actionRoutesFileName:    "actionRoutes.go",
 		loginControllerFileName: "loginController.go",
+		dbName:                  a.Name,
+		dbUser:                  fmt.Sprintf("%s_user", a.Name),
+		dbUserPassword:          fmt.Sprintf("%s_pwd", a.Name),
 		goBeautifierCmd:         "gofmt",
 		apiPath:                 "/api",
 		directories: map[string]string{
 			"server": a.AppDir,
+			"db":     "database",
 		},
 	}
 }
