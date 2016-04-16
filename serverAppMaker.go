@@ -63,7 +63,7 @@ func (app *App) GetServerVars(t *ServerAppSettings) (fileName, content string) {
 
 		var (
 			AppDB      *sql.DB
-			serverUrl  string = "http://localhost:%d/"
+			serverUrl  string = "http://127.0.0.1:%d/"
 			portNo     int    = %d
 			dbUser     string = "%s"
 			dbPassword string = "%s"

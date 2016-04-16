@@ -46,7 +46,7 @@ func main() {
 		},
 	}
 
-	app := CreateNewApp("SampleApp", "Sample Application", "Bitwinger", "V1.0", 80)
+	app := CreateNewApp("SampleApp", "Sample Application", "Bitwinger", "V1.0", 9000)
 	fmt.Println(app.AppDir)
 	app.AddModel(&model)
 	SaveAppSettings(app)
@@ -55,20 +55,7 @@ func main() {
 	app.InstallAndRunApp()
 
 	json.Marshal(app)
-	//vals, _ := json.Marshal(app)
-	//fmt.Println(string(vals))
-
-	/*
-
-		fmt.Println("Unmarshalling now")
-		str := `{"name": "Hi2", "DisplayName": "Name2"}`
-		jsonModel := Model{}
-		json.Unmarshal([]byte(str), &jsonModel)
-		fmt.Println(jsonModel)
-	*/
 	fmt.Println("Goster is running on http://127.0.0.1:8000")
-
-	//
 	http.Handle("/client/", http.StripPrefix("/client/", http.FileServer(http.Dir("client"))))
 	//
 	//http.HandleFunc("/", rootHandler)

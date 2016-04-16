@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 )
 
 type App struct {
@@ -56,8 +55,17 @@ func (a *App) SaveModel(model *Model) {
 }
 
 func (app *App) InstallAndRunApp() {
-	fmt.Println("Building and Running the App:", app.Name)
-	cmd := exec.Command("go", "install", "&&", filepath.Base(app.AppDir))
-	cmd.Dir = filepath.Dir(app.AppDir)
-	Check(cmd.Run())
+	fmt.Println("-------------------------------------------------------")
+	fmt.Println("Building Your Go Application", app.Name)
+	cmd := exec.Command("go", "install")
+	cmd.Dir = app.AppDir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(output))
+		return
+	} else {
+		fmt.Println(string(output))
+		fmt.Printf("Sucessfully Built %s. Please run %s from %s", app.Name, app.Name, app.AppDir)
+		fmt.Println()
+	}
 }

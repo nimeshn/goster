@@ -37,7 +37,6 @@ func OpenURL(url string) {
 }
 
 func main() {
-	serverUrl = fmt.Sprintf(serverUrl, portNo)
 	//Connect to the Database
 	var err error
 	AppDB, err = sql.Open("mysql",
