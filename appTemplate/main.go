@@ -51,10 +51,11 @@ func main() {
 	} else {
 		fmt.Println("The database is accessible..")
 	}
+	//
 	MakeActionRoutes()
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("client"))))
 	//
-	fmt.Printf("Goster is starting on %s...", serverUrl)
+	fmt.Printf("%s is starting on %s...", appName, serverUrl)
 	OpenURL(serverUrl)
 	http.ListenAndServe(fmt.Sprintf(":%d", portNo), nil)
 }

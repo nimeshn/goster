@@ -62,13 +62,14 @@ func (app *App) GetServerVars(t *ServerAppSettings) (fileName, content string) {
 		)
 
 		var (
+			appName    string = "%s"
 			AppDB      *sql.DB
 			serverUrl  string = "http://127.0.0.1:%d/"
 			portNo     int    = %d
 			dbUser     string = "%s"
 			dbPassword string = "%s"
 			dbName     string = "%s"
-		)`, app.PortNumber, app.PortNumber, t.dbUser, t.dbUserPassword, t.dbName)
+		)`, app.DisplayName, app.PortNumber, app.PortNumber, t.dbUser, t.dbUserPassword, t.dbName)
 	return
 }
 
@@ -81,7 +82,7 @@ func (app *App) MakeServer() {
 	fileName, content = app.GetServerVars(t)
 	CreateFile(fileName, content)
 	//
-	GenerateDBSQL(mySQLDBGenerator, app)
+	GenerateSQLDB(mySQLDBGenerator, app)
 	//
 	for _, mods := range app.Models {
 		if mods.DisplayName == "" {

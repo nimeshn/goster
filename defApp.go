@@ -68,4 +68,15 @@ func (app *App) InstallAndRunApp() {
 		fmt.Printf("Sucessfully Built %s. Please run %s from %s", app.Name, app.Name, app.AppDir)
 		fmt.Println()
 	}
+	//
+	cmd = exec.Command(CamelCase(app.Name))
+	cmd.Dir = app.AppDir
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(output))
+		return
+	} else {
+		fmt.Println(string(output))
+		fmt.Println()
+	}
 }

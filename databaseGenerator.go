@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"path"
 	"strings"
 )
@@ -23,11 +25,40 @@ var (
 	}
 )
 
-func GenerateDBSQL(generator DBGenerator, a *App) (ok bool) {
+func CreateDatabase(user, password, dbScripts string) (err error) {
+	var AppDB *sql.DB
+	//Connect to the Database
+	AppDB, err = sql.Open("mysql",
+		fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/mysql?parseTime=true", user, password))
+	if err != nil {
+		return
+	}
+	defer AppDB.Close()
+	err = AppDB.Ping()
+	if err != nil {
+		return
+	} else {
+		//run DB Scripts
+		fmt.Println("The DB Server is accessible..")
+		_, err = AppDB.Exec(dbScripts)
+		if err != nil {
+			return
+		}
+		fmt.Println("DB Generator Scripts Executed...")
+	}
+	return
+}
+
+func GenerateSQLDB(generator DBGenerator, a *App) (ok bool) {
 	fileName := generator.GetFileName(a)
 	SQL := generator.CreateDB(a)
 	for _, mod := range a.Models {
 		SQL += fmt.Sprintln() + generator.CreateTable(mod)
+	}
+	t := a.GetServerSettings()
+	err := CreateDatabase(t.dbUser, t.dbUserPassword, SQL)
+	if err != nil {
+		fmt.Println("DB Generation failed due to the following error:", err)
 	}
 	CreateFile(fileName, SQL)
 	return true
